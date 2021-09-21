@@ -3,7 +3,6 @@
 
 
 #include <stdbool.h>
-#include <limits.h>
 
 
 // setting default int numbers size if it's not defined earlier
