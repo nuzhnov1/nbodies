@@ -2,7 +2,7 @@
 #define NB_BODY_H
 
 
-#define NAME_MAX 256
+#define NB_NAME_MAX 256
 
 
 #include <stdio.h>
@@ -10,7 +10,7 @@
 
 
 typedef struct nb_body {
-    char name[NAME_MAX];
+    char name[NB_NAME_MAX];
     nb_vector2 coords;
     nb_vector2 speed;
     nb_vector2 force;

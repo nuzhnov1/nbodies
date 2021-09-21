@@ -14,8 +14,8 @@ void nb_body_init(nb_body *const body, const char* name,
                   const nb_vector2 *const coords, const nb_vector2 *const speed, 
                   const nb_vector2 *const force, const nb_float mass) {
     
-    strncpy(body->name, name, NAME_MAX - 1);
-    body->name[NAME_MAX - 1] = '\0';
+    strncpy(body->name, name, NB_NAME_MAX - 1);
+    body->name[NB_NAME_MAX - 1] = '\0';
 
     nb_vector2_copy(&body->coords, coords);
     nb_vector2_copy(&body->speed, speed);
@@ -24,8 +24,8 @@ void nb_body_init(nb_body *const body, const char* name,
 }
 
 void nb_body_copy(nb_body *const body, const nb_body *const copy) {
-    strncpy(body->name, copy->name, NAME_MAX - 1);
-    body->name[NAME_MAX - 1] = '\0';
+    strncpy(body->name, copy->name, NB_NAME_MAX - 1);
+    body->name[NB_NAME_MAX - 1] = '\0';
 
     nb_vector2_copy(&body->coords, &copy->coords);
     nb_vector2_copy(&body->speed, &copy->speed);
@@ -37,8 +37,8 @@ const nb_body* nb_body_assign(nb_body *const body, const nb_body *const copy) {
     if (body == copy)
         return body;
     
-    strncpy(body->name, copy->name, NAME_MAX - 1);
-    body->name[NAME_MAX - 1] = '\0';
+    strncpy(body->name, copy->name, NB_NAME_MAX - 1);
+    body->name[NB_NAME_MAX - 1] = '\0';
 
     nb_vector2_assign(&body->coords, &copy->coords);
     nb_vector2_assign(&body->speed, &copy->speed);
@@ -49,7 +49,7 @@ const nb_body* nb_body_assign(nb_body *const body, const nb_body *const copy) {
 }
 
 bool nb_body_read(nb_body *const body, FILE* stream) {
-    char temp_name[NAME_MAX];
+    char temp_name[NB_NAME_MAX];
     nb_vector2 temp_coords;
     nb_vector2 temp_speed;
     nb_vector2 temp_force;
@@ -63,11 +63,11 @@ bool nb_body_read(nb_body *const body, FILE* stream) {
     temp_mass = 0;
 
     int chr = getc(stream);
-    for (size_t i = 0; chr != '\0' && chr != EOF && i < NAME_MAX - 1; i++) {
+    for (size_t i = 0; chr != '\0' && chr != EOF && i < NB_NAME_MAX - 1; i++) {
         temp_name[i] = (char)chr;
         chr = getc(stream);
     }
-    temp_name[NAME_MAX - 1] = '\0';
+    temp_name[NB_NAME_MAX - 1] = '\0';
 
     if (chr == '\0') {
         is_read &= nb_vector2_read(&temp_coords, stream);
