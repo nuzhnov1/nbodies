@@ -1,0 +1,10 @@
+# Exclude dirs
+.vscode
+
+
+# Exclude files
+*.o
+*.nb
+*.txt
+nbodies
+
