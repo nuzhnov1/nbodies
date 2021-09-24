@@ -1,4 +1,5 @@
 #include "nb_menu.h"
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -8,6 +9,7 @@
 static void _nb_menu_print();
 static void _nb_menu_settings_loop(nb_rand_settings *const settings);
 static void _nb_menu_print_settings(const nb_rand_settings *const settings);
+static void _nb_menu_compare_systems(const nb_system *const system1, const nb_system *const system2);
 static void _nb_menu_add_body(nb_system *const system);
 static void _nb_menu_remove_body(nb_system *const system);
 static nb_int _nb_menu_input_int();
@@ -277,8 +279,84 @@ void nb_menu_run_system(nb_system *const system, const nb_float end_time, const 
         printf("The simulation of the system is completed.\n");
         printf("Simulation time: %.3f sec.\n", timework);
 
-        // TODO: put compare system and copy
+        _nb_menu_compare_systems(system, &copy);
     }
+}
+
+void _nb_menu_compare_systems(const nb_system *const system1, const nb_system *const system2) {
+    // Average values of:
+    nb_vector2 ae_coords;  // absolute error of coordinates
+    nb_vector2 re_coords;  // relative error of coordinates
+    nb_vector2 ae_speed;   // absolute error of speed
+    nb_vector2 re_speed;   // relative error of speed
+    nb_vector2 ae_force;   // absolute error of force
+    nb_vector2 re_force;   // relative error of force
+    
+    nb_vector2_init_default(&ae_coords);
+    nb_vector2_init_default(&re_coords);
+    nb_vector2_init_default(&ae_speed);
+    nb_vector2_init_default(&re_speed);
+    nb_vector2_init_default(&ae_force);
+    nb_vector2_init_default(&re_force);
+
+    nb_body* body1, *body2;
+    nb_vector2 vec;
+
+    printf("Comparison system 2 relative to system1:\n");
+    printf("Number of bodies in system: %d\n", system1->count);
+    printf("System time: %lf sec.\n", system1->time);
+
+    if (system1->count == 0)
+        return;
+
+    for (size_t i = 0; i < system1->count; i++) {
+        body1 = &system1->bodies[i];
+        body2 = &system2->bodies[i];
+
+        vec = nb_vector2_sub(&body1->coords, &body2->coords);
+        vec.x = llabs(vec.x), vec.y = llabs(vec.y);
+        ae_coords = nb_vector2_add(&ae_coords, &vec);
+        vec.x /= llabs(&body1->coords.x), vec.y /= llabs(&body1->coords.y);
+        re_coords = nb_vector2_add(&re_coords, &vec);
+
+        vec = nb_vector2_sub(&body1->speed, &body2->speed);
+        vec.x = llabs(vec.x), vec.y = llabs(vec.y);
+        ae_speed = nb_vector2_add(&ae_speed, &vec);
+        vec.x /= llabs(&body1->speed.x), vec.y /= llabs(&body1->speed.y);
+        re_speed = nb_vector2_add(&re_speed, &vec);
+
+        vec = nb_vector2_sub(&body1->force, &body2->force);
+        vec.x = llabs(vec.x), vec.y = llabs(vec.y);
+        ae_force = nb_vector2_add(&ae_force, &vec);
+        vec.x /= llabs(&body1->force.x), vec.y /= llabs(&body1->force.y);
+        re_force = nb_vector2_add(&re_force, &vec);
+    }
+
+    nb_vector2_mul(&ae_coords, 1 / system1->count);
+    nb_vector2_mul(&re_coords, 1 / system1->count);
+    nb_vector2_mul(&ae_speed, 1 / system1->count);
+    nb_vector2_mul(&re_speed, 1 / system1->count);
+    nb_vector2_mul(&ae_force, 1 / system1->count);
+    nb_vector2_mul(&re_force, 1 / system1->count);
+
+    printf("Average absolute error of coordinates: ");
+    nb_vector2_print(&ae_coords, stdout);
+    printf("\n");
+    printf("Average relative error of coordinates: ");
+    nb_vector2_print(&re_coords, stdout);
+    printf("\n");
+    printf("Average absolute error of speed: ");
+    nb_vector2_print(&ae_speed, stdout);
+    printf("\n");
+    printf("Average relative error of speed: ");
+    nb_vector2_print(&re_speed, stdout);
+    printf("\n");
+    printf("Average absolute error of force: ");
+    nb_vector2_print(&ae_force, stdout);
+    printf("\n");
+    printf("Average relative error of force: ");
+    nb_vector2_print(&re_force, stdout);
+    printf("\n");
 }
 
 void nb_menu_load_system(nb_system *const system, const char *const filename) {
