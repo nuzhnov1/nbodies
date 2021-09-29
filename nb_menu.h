@@ -2,12 +2,12 @@
 #define NB_MENU_H
 
 
-#include <stdio.h>
 #include "nb_system.h"
 #include "nb_rand.h"
+#include <stdio.h>
 
 
-#define NB_MAX_BODIES 1024
+#define NB_MAX_BODIES 65536
 #define NB_PATH_MAX 4096
 
 
