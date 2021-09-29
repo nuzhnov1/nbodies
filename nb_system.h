@@ -2,11 +2,11 @@
 #define NB_SYSTEM_H
 
 
-#define NB_SYSTEM_DEBUG
+#define NB_SYSTEM_DEBUG 1
 
 
-#include <stdio.h>
 #include "nb_body.h"
+#include <stdio.h>
 
 
 typedef struct nb_system {

@@ -2,8 +2,8 @@
 #define NB_VECTOR2_H
 
 
-#include <stdio.h>
 #include "nb_types.h"
+#include <stdio.h>
 
 
 typedef struct nb_vector2 {

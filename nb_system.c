@@ -1,5 +1,6 @@
 #include "nb_system.h"
 #include "nb_calculation.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
@@ -209,7 +210,7 @@ bool nb_system_print(const nb_system *const system, FILE* stream) {
 
     is_print &= (bool)(fprintf(stream, "System information:\n") > 0);
     is_print &= (bool)(fprintf(stream, "Count of bodies: %lu\n", system->count) > 0);
-    #ifdef NB_SYSTEM_DEBUG
+    #if NB_SYSTEM_DEBUG
     is_print &= (bool)(fprintf(stream, "System capacity: %lu\n", system->capacity) > 0);
     #endif
     is_print &= (bool)(fprintf(stream, "Time: %lf\n\n", system->time) > 0);
