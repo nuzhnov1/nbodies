@@ -1,9 +1,12 @@
 #include "nb_menu.h"
+
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+
+#include <omp.h>
 
 
 static void _nb_menu_print();
@@ -23,7 +26,7 @@ static void _nb_menu_input_body(nb_body *const body);
 const nb_rand_settings default_settings = {
     -100.0, 100.0,
     -10.0, 10.0,
-    0.1, 10.0
+    1.e5, 1.e6
 };
 
 
@@ -234,34 +237,13 @@ void nb_menu_rand(nb_system *const system, const nb_uint count, const nb_rand_se
 }
 
 void nb_menu_run_system(nb_system *const system, const nb_float end_time, const nb_float dt, const nb_menu_run_t run) {
-    clock_t start, finish;
     double timework;
 
-    if (run.seq && !run.openmp || !run.seq && run.openmp) {
-        bool is_parralel = run.openmp;
-        
-        if (run.seq)
-            printf("The system is being modeled in sequential mode...\n");
-        else
-            printf("The system is being modeled in parallel mode...\n");
-
-        start = clock();
-        for (nb_float cur = 0.0; cur < end_time; cur += dt)
-            nb_system_run(system, dt, is_parralel);
-        finish = clock();
-        timework = (finish - start) / (double)CLOCKS_PER_SEC;
-        printf("The simulation of the system is completed.\n");
-        printf("Simulation time: %.3f sec.\n", timework);
-    }
-    else if (run.seq && run.openmp) {
-        nb_system copy;
-
-        if (!nb_system_copy(&copy, system)) {
-            printf("Error: failed to create copy of system.\n");
-            return;
-        }
+    if (run.seq && !run.openmp) {
+        clock_t start, finish;
 
         printf("The system is being modeled in sequential mode...\n");
+
         start = clock();
         for (nb_float cur = 0.0; cur < end_time; cur += dt)
             nb_system_run(system, dt, false);
@@ -269,13 +251,45 @@ void nb_menu_run_system(nb_system *const system, const nb_float end_time, const 
         timework = (finish - start) / (double)CLOCKS_PER_SEC;
         printf("The simulation of the system is completed.\n");
         printf("Simulation time: %.3f sec.\n", timework);
+    }
+    else if (!run.seq && run.openmp) {
+        double start, finish;
+
+        printf("The system is being modeled in parallel mode...\n");
+
+        start = omp_get_wtime();
+        for (nb_float cur = 0.0; cur < end_time; cur += dt)
+            nb_system_run(system, dt, true);
+        finish = omp_get_wtime();
+        timework = finish - start;
+        printf("The simulation of the system is completed.\n");
+        printf("Simulation time: %.3f sec.\n", timework);
+    }
+    else if (run.seq && run.openmp) {
+        nb_system copy;
+        clock_t seq_start, seq_finish;
+        double par_start, par_finish;
+
+        if (!nb_system_copy(&copy, system)) {
+            printf("Error: failed to create copy of system.\n");
+            return;
+        }
+
+        printf("The system is being modeled in sequential mode...\n");
+        seq_start = clock();
+        for (nb_float cur = 0.0; cur < end_time; cur += dt)
+            nb_system_run(system, dt, false);
+        seq_finish = clock();
+        timework = (seq_finish - seq_start) / (double)CLOCKS_PER_SEC;
+        printf("The simulation of the system is completed.\n");
+        printf("Simulation time: %.3f sec.\n", timework);
         
         printf("The system is being modeled in parallel mode...\n");
-        start = clock();
+        par_start = omp_get_wtime();
         for (nb_float cur = 0.0; cur < end_time; cur += dt)
             nb_system_run(&copy, dt, true);
-        finish = clock();
-        timework = (finish - start) / (double)CLOCKS_PER_SEC;
+        par_finish = omp_get_wtime();
+        timework = par_finish - par_start;
         printf("The simulation of the system is completed.\n");
         printf("Simulation time: %.3f sec.\n", timework);
 
@@ -303,7 +317,7 @@ void _nb_menu_compare_systems(const nb_system *const system1, const nb_system *c
     nb_vector2 vec;
 
     printf("Comparison system 2 relative to system1:\n");
-    printf("Number of bodies in system: %d\n", system1->count);
+    printf("Number of bodies in system: %lu\n", system1->count);
     printf("System time: %lf sec.\n", system1->time);
 
     if (system1->count == 0)
@@ -314,21 +328,24 @@ void _nb_menu_compare_systems(const nb_system *const system1, const nb_system *c
         body2 = &system2->bodies[i];
 
         vec = nb_vector2_sub(&body1->coords, &body2->coords);
-        vec.x = llabs(vec.x), vec.y = llabs(vec.y);
+        vec.x = fabsl(vec.x), vec.y = fabsl(vec.y);
         ae_coords = nb_vector2_add(&ae_coords, &vec);
-        vec.x /= llabs(&body1->coords.x), vec.y /= llabs(&body1->coords.y);
+        vec.x = vec.x / fabsl(body1->coords.x) * 100;
+        vec.y = vec.y / fabsl(body1->coords.y) * 100;
         re_coords = nb_vector2_add(&re_coords, &vec);
 
         vec = nb_vector2_sub(&body1->speed, &body2->speed);
-        vec.x = llabs(vec.x), vec.y = llabs(vec.y);
+        vec.x = fabsl(vec.x), vec.y = fabsl(vec.y);
         ae_speed = nb_vector2_add(&ae_speed, &vec);
-        vec.x /= llabs(&body1->speed.x), vec.y /= llabs(&body1->speed.y);
+        vec.x = vec.x / fabsl(body1->speed.x) * 100;
+        vec.y = vec.y / fabsl(body1->speed.y) * 100;
         re_speed = nb_vector2_add(&re_speed, &vec);
 
         vec = nb_vector2_sub(&body1->force, &body2->force);
-        vec.x = llabs(vec.x), vec.y = llabs(vec.y);
+        vec.x = fabsl(vec.x), vec.y = fabsl(vec.y);
         ae_force = nb_vector2_add(&ae_force, &vec);
-        vec.x /= llabs(&body1->force.x), vec.y /= llabs(&body1->force.y);
+        vec.x = vec.x / fabsl(body1->force.x) * 100;
+        vec.y = vec.y / fabsl(body1->force.y) * 100;
         re_force = nb_vector2_add(&re_force, &vec);
     }
 
@@ -342,19 +359,19 @@ void _nb_menu_compare_systems(const nb_system *const system1, const nb_system *c
     printf("Average absolute error of coordinates: ");
     nb_vector2_print(&ae_coords, stdout);
     printf("\n");
-    printf("Average relative error of coordinates: ");
+    printf("Average relative error of coordinates(%%): ");
     nb_vector2_print(&re_coords, stdout);
     printf("\n");
     printf("Average absolute error of speed: ");
     nb_vector2_print(&ae_speed, stdout);
     printf("\n");
-    printf("Average relative error of speed: ");
+    printf("Average relative error of speed(%%): ");
     nb_vector2_print(&re_speed, stdout);
     printf("\n");
     printf("Average absolute error of force: ");
     nb_vector2_print(&ae_force, stdout);
     printf("\n");
-    printf("Average relative error of force: ");
+    printf("Average relative error of force(%%): ");
     nb_vector2_print(&re_force, stdout);
     printf("\n");
 }
@@ -403,6 +420,8 @@ void nb_menu_save_system(const nb_system *const system, const char *const filena
 void nb_menu_print_system(const nb_system *const system, FILE* stream) {
     if (!nb_system_print(system, stream))
         printf("Error: failed to print system.\n");
+    else if (stream != stdout)
+        printf("The system was successfully printed to this file.\n");
 }
 
 void _nb_menu_print() {
