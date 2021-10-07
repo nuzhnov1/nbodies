@@ -10,6 +10,7 @@ typedef struct nb_rand_settings
     nb_float min_coord, max_coord;
     nb_float min_speed, max_speed;
     nb_float min_mass, max_mass;
+    nb_float min_radius, max_radius;
 } nb_rand_settings;
 
 

@@ -28,7 +28,8 @@ const nb_rand_settings default_settings =
 {
     -100.0, 100.0,
     -10.0, 10.0,
-    1.e5, 1.e6
+    1.e5, 1.e6,
+    0.1, 100.0
 };
 
 
@@ -113,7 +114,10 @@ void nb_menu_loop(nb_system *const system)
                 dt = _nb_menu_input_float();
 
                 if (dt <= 0.0)
-                    printf("Error: delta of time must be greater than zero.\n");
+                {
+                    printf("Error: delta of time must be greater than "
+                        "zero.\n");
+                }
                 else
                     break;
             }
@@ -491,7 +495,7 @@ void _nb_menu_settings_loop(nb_rand_settings *const settings)
 
         choose = _nb_menu_input_uint();
 
-        if (choose >= 1 && choose <= 3)
+        if (choose >= 1 && choose <= 4)
         {
             while (true)
             {
@@ -544,16 +548,33 @@ void _nb_menu_settings_loop(nb_rand_settings *const settings)
         }
         case 4:
         {
+            if (min <= 0.0)
+            {
+                printf("Error: minimum value of radius must be greater "
+                    "than zero.\n");
+            }
+            else
+            {
+                settings->min_mass = min;
+                settings->max_mass = max;
+            }
+
+            break;
+        }
+        case 5:
+        {
             printf("Coordinates range: [%lf, %lf).\n",
                 settings->min_coord, settings->max_coord);
             printf("Speed range: [%lf, %lf).\n",
                 settings->min_speed, settings->max_speed);
             printf("Mass range: [%lf, %lf).\n",
                 settings->min_mass, settings->max_mass);
+            printf("Radius range: [%lf, %lf).\n",
+                settings->min_radius, settings->max_radius);
 
             break;
         }
-        case 5:
+        case 6:
         {
             is_exit = true;
             break;
@@ -575,8 +596,9 @@ void _nb_menu_print_settings(const nb_rand_settings *const settings)
     printf("\t1: Set min and max generator values for coodinates.\n");
     printf("\t2: Set min and max generator values for speed.\n");
     printf("\t3: Set min and max generator values for mass.\n");
-    printf("\t4: Print settings.\n");
-    printf("\t5: Exit.\n");
+    printf("\t4: Set min and max generator values for radius.\n");
+    printf("\t5: Print settings.\n");
+    printf("\t6: Exit.\n");
 }
 
 void _nb_menu_add_body(nb_system *const system)
@@ -732,7 +754,7 @@ void _nb_menu_input_body(nb_body *const body)
 {
     char name[NB_NAME_MAX];
     nb_vector2 coords, speed, force;
-    nb_float mass;
+    nb_float mass, radius;
 
     printf("Input name:\n");
     _nb_menu_input_str(name, NB_NAME_MAX);
@@ -756,5 +778,16 @@ void _nb_menu_input_body(nb_body *const body)
             break;
     }
 
-    nb_body_init(body, name, &coords, &speed, &force, mass);
+    while (true)
+    {
+        printf("Input radius:\n");
+        radius = _nb_menu_input_float();
+
+        if (radius < 0.0)
+            printf("Error: radius must be greater than zero.\n");
+        else
+            break;
+    }
+
+    nb_body_init(body, name, &coords, &speed, &force, mass, radius);
 }

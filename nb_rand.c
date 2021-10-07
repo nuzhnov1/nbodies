@@ -39,12 +39,13 @@ void nb_rand_body(nb_body *const body, const char *const name,
                   const nb_rand_settings *const settings)
 {    
     nb_vector2 coords, speed, force;
-    nb_float mass;
+    nb_float mass, radius;
 
     nb_rand_vector2(&coords, settings->min_coord, settings->max_coord);
     nb_rand_vector2(&speed, settings->min_speed, settings->max_speed);
     nb_vector2_init(&force, 0.0, 0.0);
     mass = nb_rand_float(settings->min_mass, settings->max_mass);
+    radius = nb_rand_float(settings->min_radius, settings->max_radius);
 
-    nb_body_init(body, name, &coords, &speed, &force, mass);
+    nb_body_init(body, name, &coords, &speed, &force, mass, radius);
 }

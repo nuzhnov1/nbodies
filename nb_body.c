@@ -10,11 +10,12 @@ void nb_body_init_default(nb_body *const body)
     nb_vector2_init_default(&body->speed);
     nb_vector2_init_default(&body->force);
     body->mass = 0.0;
+    body->radius = 0.0;
 }
 
 void nb_body_init(nb_body *const body, const char* name,
     const nb_vector2 *const coords, const nb_vector2 *const speed, 
-    const nb_vector2 *const force, nb_float mass) 
+    const nb_vector2 *const force, nb_float mass, nb_float radius) 
 {
     
     strncpy(body->name, name, NB_NAME_MAX - 1);
@@ -24,6 +25,7 @@ void nb_body_init(nb_body *const body, const char* name,
     nb_vector2_copy(&body->speed, speed);
     nb_vector2_copy(&body->force, force);
     body->mass = mass;
+    body->radius = radius;
 }
 
 void nb_body_copy(nb_body *const body, const nb_body *const copy)
@@ -35,6 +37,7 @@ void nb_body_copy(nb_body *const body, const nb_body *const copy)
     nb_vector2_copy(&body->speed, &copy->speed);
     nb_vector2_copy(&body->force, &copy->force);
     body->mass = copy->mass;
+    body->radius = copy->radius;
 }
 
 const nb_body* nb_body_assign(nb_body *const body, const nb_body *const copy)
@@ -49,6 +52,7 @@ const nb_body* nb_body_assign(nb_body *const body, const nb_body *const copy)
     nb_vector2_assign(&body->speed, &copy->speed);
     nb_vector2_assign(&body->force, &copy->force);
     body->mass = copy->mass;
+    body->radius = copy->radius;
 
     return body;
 }
@@ -60,13 +64,15 @@ bool nb_body_read(nb_body *const body, FILE* stream)
     nb_vector2 temp_speed;
     nb_vector2 temp_force;
     nb_float temp_mass;
+    nb_float temp_radius;
     bool is_read = true;
 
     strcpy(temp_name, "\0");
     nb_vector2_init_default(&temp_coords);
     nb_vector2_init_default(&temp_speed);
     nb_vector2_init_default(&temp_force);
-    temp_mass = 0;
+    temp_mass = 0.0;
+    temp_radius = 0.0;
 
     // read body name
     int chr = getc(stream);
@@ -85,12 +91,14 @@ bool nb_body_read(nb_body *const body, FILE* stream)
         is_read &= nb_vector2_read(&temp_force, stream);
         is_read &= (bool)(fread((void*)&temp_mass, sizeof(nb_float),
             1, stream) == 1);
+        is_read &= (bool)(fread((void*)&temp_radius, sizeof(nb_float),
+            1, stream) == 1); 
     }
     else
         is_read = false;
 
     nb_body_init(body, temp_name, &temp_coords, &temp_speed, &temp_force,
-        temp_mass);
+        temp_mass, temp_radius);
     
     return is_read;
 }
@@ -106,6 +114,8 @@ bool nb_body_write(const nb_body *const body, FILE* stream)
     is_write &= nb_vector2_write(&body->speed, stream);
     is_write &= nb_vector2_write(&body->force, stream);
     is_write &= (bool)(fwrite((const void*)&body->mass, sizeof(nb_float), 1,
+        stream) == 1);
+    is_write &= (bool)(fwrite((const void*)&body->radius, sizeof(nb_float), 1,
         stream) == 1);
 
     return is_write;
@@ -130,6 +140,8 @@ bool nb_body_print(const nb_body *const body, FILE* stream)
     is_print &= (bool)(fprintf(stream, "\n"));
 
     is_print &= (bool)(fprintf(stream, "Mass = %lf\n", body->mass) > 0);
+
+    is_print &= (bool)(fprintf(stream, "Radius = %lf\n", body->radius) > 0);
 
     return is_print;
 }
