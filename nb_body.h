@@ -5,11 +5,13 @@
 #define NB_NAME_MAX 256
 
 
-#include "nb_vector2.h"
 #include <stdio.h>
 
+#include "nb_vector2.h"
 
-typedef struct nb_body {
+
+typedef struct nb_body
+{
     char name[NB_NAME_MAX];
     nb_vector2 coords;
     nb_vector2 speed;
@@ -20,8 +22,8 @@ typedef struct nb_body {
 
 void nb_body_init_default(nb_body *const body);
 void nb_body_init(nb_body *const body, const char* name,
-                  const nb_vector2 *const coords, const nb_vector2 *const speed, 
-                  const nb_vector2 *const force, const nb_float mass);
+    const nb_vector2 *const coords, const nb_vector2 *const speed, 
+    const nb_vector2 *const force, nb_float mass);
 void nb_body_copy(nb_body *const body, const nb_body *const copy);
 const nb_body* nb_body_assign(nb_body *const body, const nb_body *const copy);
 bool nb_body_read(nb_body *const body, FILE* stream);

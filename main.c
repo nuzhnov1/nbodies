@@ -5,10 +5,10 @@
 #include "nb_menu.h"
 
 
-int main() {
+int main() 
+{
     nb_system system;
 
     nb_system_init_default(&system);
-
     nb_menu_loop(&system);
 }
