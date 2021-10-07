@@ -1,6 +1,8 @@
 #include "nb_calculation.h"
 
 #include <math.h>
+#include <stdlib.h>
+#include <stddef.h>
 
 #include <omp.h>
 
@@ -31,6 +33,7 @@ void nb_euler_singlethread(nb_system *const system, nb_float dt)
     nb_float *const fx = &bodies[0].force.x;   // "x" component of force
     nb_float *const fy = &bodies[0].force.y;   // "y" component of force
     nb_float *const mass = &bodies[0].mass;    // mass
+    nb_float *const rad = &bodies[0].radius;   // radius
 
     // components of "i" body
     nb_float* cx_i = cx;
@@ -40,13 +43,17 @@ void nb_euler_singlethread(nb_system *const system, nb_float dt)
     nb_float* fx_i = fx;
     nb_float* fy_i = fy;
     nb_float* mass_i = mass;
+    nb_float* rad_i = rad;
 
-    // some components of "j" body
+    // components of "j" body
     nb_float* cx_j; 
     nb_float* cy_j;
+    nb_float* sx_j;
+    nb_float* sy_j;
     nb_float* fx_j;
     nb_float* fy_j;
     nb_float* mass_j;
+    nb_float* rad_j;
 
     // Initializing all total forces for all bodies to 0
     for (size_t i = 0; i < count; i++)
@@ -60,24 +67,48 @@ void nb_euler_singlethread(nb_system *const system, nb_float dt)
     fx_i = fx;
     fy_i = fy;
 
-    // Calculate forces for all bodies in system
+    // Calculate parameters for all bodies in system
     for (size_t i = 0; i < count; i++)
     {
+        // total mass of other bodies, which colided with body "i"
+        nb_float t_mass = 0.0;
+        // total impulse of other bodies, which colided with body "j"
+        nb_float t_impulse_x = 0.0;
+        nb_float t_impulse_y = 0.0;
+        
+        // did the body "i" collide with anyone body
+        bool is_collided = false;
+
         cx_j = move_ptr(cx_i, offset); 
         cy_j = move_ptr(cy_i, offset);
+        sx_j = move_ptr(sx_i, offset);
+        sy_j = move_ptr(sy_j, offset);
         fx_j = move_ptr(fx_i, offset);
         fy_j = move_ptr(fy_i, offset);
         mass_j = move_ptr(mass_i, offset);
+        rad_j = move_ptr(rad_i, offset);
 
         // Calculate forces between body "i" and all bodies "j", when j > i
+        // Controlling collisions
         for (size_t j = i + 1; j < count; j++)
         {
             nb_float dx = *cx_j - *cx_i;
             nb_float dy = *cy_j - *cy_i;
 
-            // (dx ^ 2 + dy ^ 2) ^ (3 / 2) =>
-            nb_float temp = dx * dx + dy * dy;
-            temp = temp * (nb_float)sqrtl(temp);
+            // distance between bodies "i" and "j"
+            nb_float distance = (nb_float)sqrtl(dx * dx + dy * dy);
+            
+            // if the bodies collided
+            if (distance <= *rad_i + *rad_j)
+            { 
+                is_collided |= true;
+                t_mass += (*mass_j);
+                t_impulse_x += (*sx_j) * (*mass_j);
+                t_impulse_y += (*sy_j) * (*mass_j);
+            }
+
+            // (dx * dx + dy * dy) ^ (3 / 2)
+            nb_float temp = distance * distance * distance;            
 
             // scalar part of force
             nb_float scalar = gravity_const * (*mass_i) * (*mass_j) / temp;
@@ -96,53 +127,46 @@ void nb_euler_singlethread(nb_system *const system, nb_float dt)
 
             cx_j = move_ptr(cx_j, offset);
             cy_j = move_ptr(cy_j, offset);
+            sx_j = move_ptr(sx_j, offset);
+            sy_j = move_ptr(sy_j, offset);
             fx_j = move_ptr(fx_j, offset);
             fy_j = move_ptr(fy_j, offset);
             mass_j = move_ptr(mass_j, offset);
+            rad_j = move_ptr(rad_j, offset);
         }
 
-        cx_i = move_ptr(cx_i, offset);
-        cy_i = move_ptr(cy_i, offset);
-        fx_i = move_ptr(fx_i, offset);
-        fy_i = move_ptr(fy_i, offset);
-        mass_i = move_ptr(mass_i, offset);
-    }
-    cx_i = cx;
-    cy_i = cy;
-    fx_i = fx;
-    fy_i = fy;
-    mass_i = mass;
+        // Values of speed at current time moment
+        nb_float prev_sx_i = *sx_i;
+        nb_float prev_sy_i = *sy_i;
 
-    // Calculate speed for all bodies in system
-    for (size_t i = 0; i < count; i++)
-    {
+        // Calculate speed for body "i" after collisions
+        if (is_collided)
+        {
+            nb_float scal1 = ((*mass_i) - t_mass) / ((*mass_i) + t_mass);
+            nb_float scal2 = 2.0 / ((*mass_i) + t_mass);
+
+            *sx_i = scal1 * prev_sx_i + scal2 * t_impulse_x;
+            *sy_i = scal1 * prev_sy_i + scal2 * t_impulse_y;
+        }
+
+        // Calculate speed for body "i" through time "dt"
         *sx_i += dt * (*fx_i) / (*mass_i);
         *sy_i += dt * (*fy_i) / (*mass_i);
 
-        sx_i = move_ptr(sx_i, offset);
-        sy_i = move_ptr(sy_i, offset);
-        fx_i = move_ptr(fx_i, offset);
-        fy_i = move_ptr(fy_i, offset);
-        mass_i = move_ptr(mass_i, offset);
-    }
-    sx_i = sx;
-    sy_i = sy;
-    fx_i = fx;
-    fy_i = fy;
-    mass_i = mass;
-
-    // Calculate new coordinates of body "j" 
-    for (size_t i = 0; i < count; i++)
-    {
-        *cx_i += dt * (*sx_i);
-        *cy_i += dt * (*sy_i);
+        // Calculate new coordinates for body "i" 
+        *cx_i += dt * prev_sx_i + (*sx_i - prev_sx_i) * dt / 2;
+        *cy_i += dt * prev_sy_i + (*sy_i - prev_sy_i) * dt / 2;
 
         cx_i = move_ptr(cx_i, offset);
         cy_i = move_ptr(cy_i, offset);
         sx_i = move_ptr(sx_i, offset);
         sy_i = move_ptr(sy_i, offset);
+        fx_i = move_ptr(fx_i, offset);
+        fy_i = move_ptr(fy_i, offset);
+        mass_i = move_ptr(mass_i, offset);
+        rad_i = move_ptr(rad_i, offset);
     }
-
+    
     time += dt;
 }
 
