@@ -178,199 +178,205 @@ void nb_euler_multithreading(nb_system *const system, const nb_float dt) {
     
     // Initializing all total forces for all bodies to 0
     // TODO: specify the number in clause if
-    #pragma omp parallel private(fx_i, fy_i) shared(count, size, fx, fy) \
-                         num_threads(threads_count) if (count > threads_count * 10)
-    #pragma omp for schedule(static, count / threads_count)
-    for (size_t i = 0; i < count; i++) {
-        fx_i = move_ptr(fx, size * i);
-        fy_i = move_ptr(fy, size * i);
-        
-        *fx_i = 0;
-        *fy_i = 0;
-
-        // TODO: remove this aftet debugging
-        #if NB_CALCULATION_DEBUG
-        if (i == 0)
-            printf("Was the force initialization block parallelized: %s.\n", \
-                    omp_in_parallel() ? "true" : "false");
-        #endif
-    }
-    
-    // Calculate forces for all bodies in system
-    #if NB_CALCULATION_PARALLEL_ALGO == 1
-    #pragma omp parallel private(cx_i, cy_i, fx_i, fy_i, mass_i, \
+    #pragma omp parallel private(cx_i, cy_i, sx_i, sy_i, fx_i, fy_i, mass_i, \
                                  cx_j, cy_j, fx_j, fy_j, mass_j) \
-                         shared(count, size, cx, cy, fx, fy, mass, gravity_const) \
-                         num_threads(threads_count)
-    #pragma omp for schedule(static, count / threads_count)
-    for (size_t i = 0; i < count; i++) {
-        cx_i = move_ptr(cx, size * i);
-        cy_i = move_ptr(cy, size * i);
-        fx_i = move_ptr(fx, size * i);
-        fy_i = move_ptr(fy, size * i);
-        mass_i = move_ptr(mass, size * i);
+                         shared(count, size, gravity_const, dt, cx, cy, \
+                                sx, sy, fx, fy, mass) \
+                         num_threads(threads_count) \
+                         if (count > threads_count * 10)
+    {
+        #pragma omp for schedule(static, count / threads_count)
+        for (size_t i = 0; i < count; i++)
+        {
+            fx_i = move_ptr(fx, size * i);
+            fy_i = move_ptr(fy, size * i);
+            
+            *fx_i = 0;
+            *fy_i = 0;
 
-        cx_j = move_ptr(cx_i, size); 
-        cy_j = move_ptr(cy_i, size);
-        fx_j = move_ptr(fx_i, size);
-        fy_j = move_ptr(fy_i, size);
-        mass_j = move_ptr(mass_i, size);
-
-        for (size_t j = i + 1; j < count; j++) {
-            // calculate force between body "i" and body "j"
-            nb_float dx = *cx_j - *cx_i;
-            nb_float dy = *cy_j - *cy_i;
-
-            // (dx ^ 2 + dy ^ 2) ^ (3 / 2) =>
-            nb_float temp = dx * dx + dy * dy;
-            temp = temp * (nb_float)sqrtl(temp);
-
-            // scalar part of force
-            nb_float scalar = gravity_const * (*mass_i) * (*mass_j) / temp;
-
-            // components of force
-            nb_float fx_c = dx * scalar;
-            nb_float fy_c = dy * scalar;
-
-            // The force acting on the body "i" relative to the body "j"
-            // WARNING: this code may leads to a race condition if not used sync methods!
-            #pragma omp atomic
-            *fx_i += fx_c;
-            #pragma omp atomic
-            *fy_i += fy_c;
-
-            // The force acting on the body "j" relative to the body "i"
-            // WARNING: this code may leads to a race condition if not used sync methods!
-            #pragma omp atomic
-            *fx_j -= fx_c;
-            #pragma omp atomic
-            *fy_j -= fy_c;
-
-            cx_j = move_ptr(cx_j, size); 
-            cy_j = move_ptr(cy_j, size);
-            fx_j = move_ptr(fx_j, size);
-            fy_j = move_ptr(fy_j, size);
-            mass_j = move_ptr(mass_j, size);
+            // TODO: remove this aftet debugging
+            #if NB_CALCULATION_DEBUG
+            if (i == 0)
+                printf("Was the force initialization block parallelized: %s.\n", \
+                        omp_in_parallel() ? "true" : "false");
+            #endif
         }
+        
+        // Calculate forces for all bodies in system
+        // Non-efficient algorithm
+        #if NB_CALCULATION_PARALLEL_ALGO == 1
+        #pragma omp for schedule(static, count / threads_count)
+        for (size_t i = 0; i < count; i++)
+        {
+            cx_i = move_ptr(cx, size * i);
+            cy_i = move_ptr(cy, size * i);
+            fx_i = move_ptr(fx, size * i);
+            fy_i = move_ptr(fy, size * i);
+            mass_i = move_ptr(mass, size * i);
 
-        // TODO: remove this aftet debugging
-        #if NB_CALCULATION_DEBUG
-        if (i == 0)
-            printf("Was the force calculation block parallelized: %s.\n", \
-                    omp_in_parallel() ? "true" : "false");
-        #endif
-    }
-    #elif NB_CALCULATION_PARALLEL_ALGO == 2
-    #pragma omp parallel private(cx_i, cy_i, fx_i, fy_i, mass_i, \
-                                 cx_j, cy_j, fx_j, fy_j, mass_j) \
-                         shared(count, size, cx, cy, fx, fy, mass, gravity_const) \
-                         num_threads(threads_count)
-    #pragma omp for schedule(static, count / threads_count)
-    for (size_t i = 0; i < count; i++) {
-        cx_i = move_ptr(cx, size * i);
-        cy_i = move_ptr(cy, size * i);
-        fx_i = move_ptr(fx, size * i);
-        fy_i = move_ptr(fy, size * i);
-        mass_i = move_ptr(mass, size * i);
+            cx_j = move_ptr(cx_i, size); 
+            cy_j = move_ptr(cy_i, size);
+            fx_j = move_ptr(fx_i, size);
+            fy_j = move_ptr(fy_i, size);
+            mass_j = move_ptr(mass_i, size);
 
-        cx_j = cx; 
-        cy_j = cy;
-        fx_j = fx;
-        fy_j = fy;
-        mass_j = mass;
-
-        for (size_t j = 0; j < count; j++) {
-            if (i == j)
+            for (size_t j = i + 1; j < count; j++)
             {
+                // calculate force between body "i" and body "j"
+                nb_float dx = *cx_j - *cx_i;
+                nb_float dy = *cy_j - *cy_i;
+
+                // (dx ^ 2 + dy ^ 2) ^ (3 / 2) =>
+                nb_float temp = dx * dx + dy * dy;
+                temp = temp * (nb_float)sqrtl(temp);
+
+                // scalar part of force
+                nb_float scalar = gravity_const * (*mass_i) * (*mass_j) / temp;
+
+                // components of force
+                nb_float fx_c = dx * scalar;
+                nb_float fy_c = dy * scalar;
+
+                // The force acting on the body "i" relative to the body "j"
+                // WARNING: this code may leads to a race condition if not used sync methods!
+                #pragma omp atomic
+                *fx_i += fx_c;
+                #pragma omp atomic
+                *fy_i += fy_c;
+
+                // The force acting on the body "j" relative to the body "i"
+                // WARNING: this code may leads to a race condition if not used sync methods!
+                #pragma omp atomic
+                *fx_j -= fx_c;
+                #pragma omp atomic
+                *fy_j -= fy_c;
+
                 cx_j = move_ptr(cx_j, size); 
                 cy_j = move_ptr(cy_j, size);
                 fx_j = move_ptr(fx_j, size);
                 fy_j = move_ptr(fy_j, size);
                 mass_j = move_ptr(mass_j, size);
-
-                continue;
             }
-            
-            // calculate force between body "i" and body "j"
-            nb_float dx = *cx_j - *cx_i;
-            nb_float dy = *cy_j - *cy_i;
 
-            // (dx ^ 2 + dy ^ 2) ^ (3 / 2) =>
-            nb_float temp = dx * dx + dy * dy;
-            temp = temp * (nb_float)sqrtl(temp);
+            // TODO: remove this aftet debugging
+            #if NB_CALCULATION_DEBUG
+            if (i == 0)
+            {
+                printf("Was the force calculation block parallelized: %s.\n", \
+                        omp_in_parallel() ? "true" : "false");
+            }
+            #endif
+        }
+        #elif NB_CALCULATION_PARALLEL_ALGO == 2
+        #pragma omp for schedule(static, count / threads_count)
+        for (size_t i = 0; i < count; i++)
+        {
+            cx_i = move_ptr(cx, size * i);
+            cy_i = move_ptr(cy, size * i);
+            fx_i = move_ptr(fx, size * i);
+            fy_i = move_ptr(fy, size * i);
+            mass_i = move_ptr(mass, size * i);
 
-            // scalar part of force
-            nb_float scalar = gravity_const * (*mass_i) * (*mass_j) / temp;
+            cx_j = cx; 
+            cy_j = cy;
+            fx_j = fx;
+            fy_j = fy;
+            mass_j = mass;
 
-            // components of force
-            nb_float fx_c = dx * scalar;
-            nb_float fy_c = dy * scalar;
+            for (size_t j = 0; j < count; j++)
+            {
+                if (i == j)
+                {
+                    cx_j = move_ptr(cx_j, size); 
+                    cy_j = move_ptr(cy_j, size);
+                    fx_j = move_ptr(fx_j, size);
+                    fy_j = move_ptr(fy_j, size);
+                    mass_j = move_ptr(mass_j, size);
 
-            // The force acting on the body "i" relative to the body "j"
-            *fx_i += fx_c;
-            *fy_i += fy_c;
+                    continue;
+                }
+                
+                // calculate force between body "i" and body "j"
+                nb_float dx = *cx_j - *cx_i;
+                nb_float dy = *cy_j - *cy_i;
 
-            cx_j = move_ptr(cx_j, size); 
-            cy_j = move_ptr(cy_j, size);
-            fx_j = move_ptr(fx_j, size);
-            fy_j = move_ptr(fy_j, size);
-            mass_j = move_ptr(mass_j, size);
+                // (dx ^ 2 + dy ^ 2) ^ (3 / 2) =>
+                nb_float temp = dx * dx + dy * dy;
+                temp = temp * (nb_float)sqrtl(temp);
+
+                // scalar part of force
+                nb_float scalar = gravity_const * (*mass_i) * (*mass_j) / temp;
+
+                // components of force
+                nb_float fx_c = dx * scalar;
+                nb_float fy_c = dy * scalar;
+
+                // The force acting on the body "i" relative to the body "j"
+                *fx_i += fx_c;
+                *fy_i += fy_c;
+
+                cx_j = move_ptr(cx_j, size); 
+                cy_j = move_ptr(cy_j, size);
+                fx_j = move_ptr(fx_j, size);
+                fy_j = move_ptr(fy_j, size);
+                mass_j = move_ptr(mass_j, size);
+            }
+
+            // TODO: remove this aftet debugging
+            #if NB_CALCULATION_DEBUG
+            if (i == 0)
+            {
+                printf("Was the force calculation block parallelized: %s.\n", \
+                        omp_in_parallel() ? "true" : "false");
+            }
+            #endif
+        }
+        #endif
+
+        // Calculate speed for all bodies in system
+        #pragma omp for schedule(static, count / threads_count)
+        for (size_t i = 0; i < count; i++)
+        {
+            sx_i = move_ptr(sx, size * i);
+            sy_i = move_ptr(sy, size * i);
+            fx_i = move_ptr(fx, size * i);
+            fy_i = move_ptr(fy, size * i);
+            mass_i = move_ptr(mass, size * i);
+
+            *sx_i += dt * (*fx_i) / (*mass_i);
+            *sy_i += dt * (*fy_i) / (*mass_i);
+
+            // TODO: remove this aftet debugging
+            #if NB_CALCULATION_DEBUG
+            if (i == 0)
+            {
+                printf("Was the speed calculation block parallelized: %s.\n", \
+                        omp_in_parallel() ? "true" : "false");
+            }
+            #endif
         }
 
-        // TODO: remove this aftet debugging
-        #if NB_CALCULATION_DEBUG
-        if (i == 0)
-            printf("Was the force calculation block parallelized: %s.\n", \
-                    omp_in_parallel() ? "true" : "false");
-        #endif
-    }
-    #endif
+        // Calculate new coordinates of body "j"
+        #pragma omp for schedule(static, count / threads_count)
+        for (size_t i = 0; i < count; i++)
+        {
+            cx_i = move_ptr(cx, size * i);
+            cy_i = move_ptr(cy, size * i);
+            sx_i = move_ptr(sx, size * i);
+            sy_i = move_ptr(sy, size * i);
+            
+            *cx_i += dt * (*sx_i);
+            *cy_i += dt * (*sy_i);
 
-    // Calculate speed for all bodies in system
-    // TODO: specify the number in clause if
-    #pragma omp parallel private(sx_i, sy_i, fx_i, fy_i, mass_i) \
-                         shared(count, size, dt, sx, sy, fx, fy, mass) \
-                         num_threads(threads_count) if (count > threads_count * 10)
-    #pragma omp for schedule(static, count / threads_count)
-    for (size_t i = 0; i < count; i++) {
-        sx_i = move_ptr(sx, size * i);
-        sy_i = move_ptr(sy, size * i);
-        fx_i = move_ptr(fx, size * i);
-        fy_i = move_ptr(fy, size * i);
-        mass_i = move_ptr(mass, size * i);
-
-        *sx_i += dt * (*fx_i) / (*mass_i);
-        *sy_i += dt * (*fy_i) / (*mass_i);
-
-        // TODO: remove this aftet debugging
-        #if NB_CALCULATION_DEBUG
-        if (i == 0)
-            printf("Was the speed calculation block parallelized: %s.\n", \
-                    omp_in_parallel() ? "true" : "false");
-        #endif
-    }
-
-    // Calculate new coordinates of body "j"
-    // TODO: specify the number in clause if
-    #pragma omp parallel private(cx_i, cy_i, sx_i, sy_i) \
-                         shared(count, size, dt, cx, cy, sx, sy) \
-                         num_threads(threads_count) if (count > threads_count * 10)
-    #pragma omp for schedule(static, count / threads_count)
-    for (size_t i = 0; i < count; i++) {
-        cx_i = move_ptr(cx, size * i);
-        cy_i = move_ptr(cy, size * i);
-        sx_i = move_ptr(sx, size * i);
-        sy_i = move_ptr(sy, size * i);
-        
-        *cx_i += dt * (*sx_i);
-        *cy_i += dt * (*sy_i);
-
-        // TODO: remove this aftet debugging
-        #if NB_CALCULATION_DEBUG
-        if (i == 0)
-            printf("Was the coordinates calculation block parallelized: %s.\n", \
-                    omp_in_parallel() ? "true" : "false");
-        #endif
+            // TODO: remove this aftet debugging
+            #if NB_CALCULATION_DEBUG
+            if (i == 0)
+            {
+                printf("Was the coordinates calculation block parallelized: %s.\n", \
+                        omp_in_parallel() ? "true" : "false");
+            }
+            #endif
+        }
     }
 
     time += dt;
