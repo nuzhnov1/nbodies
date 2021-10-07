@@ -189,7 +189,7 @@ void nb_euler_multithreading(nb_system *const system, nb_float dt)
     #pragma omp parallel private(cx_i, cy_i, sx_i, sy_i, fx_i, fy_i, mass_i, \
                                  cx_j, cy_j, fx_j, fy_j, mass_j) \
                          shared(count, offset, gravity_const, dt, cx, cy, \
-                                sx, sy, fx, fy, mass, threads_count) \
+                                sx, sy, fx, fy, mass) \
                          if (count > max_threads * 10)
     {
         const size_t threads_count = (size_t)omp_get_num_threads();

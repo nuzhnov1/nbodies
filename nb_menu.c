@@ -555,8 +555,8 @@ void _nb_menu_settings_loop(nb_rand_settings *const settings)
             }
             else
             {
-                settings->min_mass = min;
-                settings->max_mass = max;
+                settings->min_radius = min;
+                settings->max_radius = max;
             }
 
             break;
