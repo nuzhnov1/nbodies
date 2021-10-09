@@ -83,8 +83,7 @@ nb_float nb_vector2_distance(const nb_vector2 *const vec1,
 
 bool nb_vector2_read(nb_vector2 *const vec, FILE* stream)
 {
-    bool is_read = (bool)(fread((void*)vec, sizeof(nb_vector2),
-        1, stream) == 1);
+    bool is_read = fread((void*)vec, sizeof(nb_vector2), 1, stream) == 1;
     
     if (!is_read)
         vec->x = 0, vec->y = 0;
@@ -94,15 +93,15 @@ bool nb_vector2_read(nb_vector2 *const vec, FILE* stream)
 
 bool nb_vector2_write(const nb_vector2 *const vec, FILE* stream)
 {
-    bool is_write = (bool)(fwrite((const void*)vec, sizeof(nb_vector2),
-        1, stream) == 1);
+    bool is_write = fwrite((const void*)vec, sizeof(nb_vector2), 
+        1, stream) == 1;
 
     return is_write;        
 }
 
 bool nb_vector2_print(const nb_vector2 *const vec, FILE* stream)
 {
-    bool is_print = (bool)(fprintf(stream, "(%lf, %lf)", vec->x, vec->y) > 0);
+    bool is_print = fprintf(stream, "(%lf, %lf)", vec->x, vec->y) > 0;
 
     return is_print;
 }
