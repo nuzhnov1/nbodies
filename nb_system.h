@@ -2,7 +2,7 @@
 #define NB_SYSTEM_H
 
 
-#define NB_SYSTEM_DEBUG 1
+#define NB_SYSTEM_DEBUG
 
 
 #include "nb_body.h"

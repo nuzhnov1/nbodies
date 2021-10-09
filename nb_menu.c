@@ -236,7 +236,7 @@ void nb_menu_rand(nb_system *const system, nb_uint count,
     name[NB_NAME_MAX - 1] = '\0';
 
     // Setting seed to random numbers generator
-    #if NB_MENU_DEBUG
+    #ifdef NB_MENU_DEBUG
     nb_rand_srand(0);
     #else
     nb_rand_srand((nb_uint)time((time_t*)NULL));
@@ -544,7 +544,7 @@ void _nb_menu_settings_loop(nb_rand_settings *const settings)
                 printf("Enter the maximum generator value:\n");
                 max = _nb_menu_input_float();
 
-                if (fabsl(min - max) > NB_FLOAT_EPSILON)
+                if (min > max)
                 {
                     printf("Error: minimum value greater then maximum "
                         "value.\n");

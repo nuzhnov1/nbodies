@@ -276,7 +276,7 @@ bool nb_system_print(const nb_system *const system, FILE* stream)
 
     is_print &= fprintf(stream, "System information:\n") > 0;
     is_print &= fprintf(stream, "Count of bodies: %lu\n", system->count) > 0;
-    #if NB_SYSTEM_DEBUG
+    #ifdef NB_SYSTEM_DEBUG
     is_print &= fprintf(stream, "System capacity: %lu\n",
         system->capacity) > 0;
     #endif

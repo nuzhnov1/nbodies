@@ -2,14 +2,15 @@
 #define NB_MENU_H
 
 
+#define NB_MENU_DEBUG
+
+
 #include "nb_system.h"
 #include "nb_rand.h"
 
 
 #define NB_MAX_BODIES 65536
 #define NB_PATH_MAX 4096
-
-#define NB_MENU_DEBUG 1
 
 
 typedef struct nb_menu_run_t
