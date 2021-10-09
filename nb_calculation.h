@@ -2,8 +2,7 @@
 #define NB_CALCULATION_H
 
 
-#define NB_CALCULATION_DEBUG 0
-#define NB_CALCULATION_PARALLEL_ALGO 2
+#define NB_CALCULATION_DEBUG
 
 
 #include "nb_system.h"
