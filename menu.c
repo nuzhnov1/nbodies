@@ -1,4 +1,4 @@
-#include "nb_menu.h"
+#include "menu.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -9,19 +9,19 @@
 #include <omp.h>
 
 
-static void _nb_menu_print();
-static void _nb_menu_settings_loop(nb_rand_settings *const settings);
-static void _nb_menu_print_settings(const nb_rand_settings *const settings);
-static void _nb_menu_compare_systems(const nb_system *const system1,
+static void _menu_print();
+static void _menu_settings_loop(nb_rand_settings *const settings);
+static void _menu_print_settings(const nb_rand_settings *const settings);
+static void _menu_compare_systems(const nb_system *const system1,
     const nb_system *const system2);
-static void _nb_menu_add_body(nb_system *const system);
-static void _nb_menu_remove_body(nb_system *const system);
-static nb_int _nb_menu_input_int();
-static nb_uint _nb_menu_input_uint();
-static nb_float _nb_menu_input_float();
-static char* _nb_menu_input_str(char* const buffer, size_t buffer_size);
-static void _nb_menu_input_vector(nb_vector2 *const vector);
-static void _nb_menu_input_body(nb_body *const body);
+static void _menu_add_body(nb_system *const system);
+static void _menu_remove_body(nb_system *const system);
+static nb_int _menu_input_int();
+static nb_uint _menu_input_uint();
+static nb_float _menu_input_float();
+static char* _menu_input_str(char* const buffer, size_t buffer_size);
+static void _menu_input_vector(nb_vector2 *const vector);
+static void _menu_input_body(nb_body *const body);
 
 
 const nb_rand_settings default_settings = 
@@ -33,7 +33,7 @@ const nb_rand_settings default_settings =
 };
 
 
-void nb_menu_loop(nb_system *const system)
+void menu_loop(nb_system *const system)
 {
     nb_rand_settings settings = default_settings;
     bool is_exit = false;
@@ -41,9 +41,9 @@ void nb_menu_loop(nb_system *const system)
 
     while (!is_exit)
     {
-        _nb_menu_print();
+        _menu_print();
 
-        choose = _nb_menu_input_uint();
+        choose = _menu_input_uint();
 
         switch (choose)
         {
@@ -54,7 +54,7 @@ void nb_menu_loop(nb_system *const system)
             printf("Enter the count of bodies in system:\n");
             while (true)
             {
-                count = _nb_menu_input_uint();
+                count = _menu_input_uint();
 
                 if (count > NB_MAX_BODIES)
                 {
@@ -65,13 +65,13 @@ void nb_menu_loop(nb_system *const system)
                     break;
             }
 
-            nb_menu_rand(system, count, &settings);
+            menu_rand(system, count, &settings);
 
             break;
         }
         case 2:
         {
-            _nb_menu_settings_loop(&settings);
+            _menu_settings_loop(&settings);
             break;
         }
         case 3:
@@ -82,25 +82,25 @@ void nb_menu_loop(nb_system *const system)
                     " has been exceeded.\n");
             }
             else
-                _nb_menu_add_body(system);
+                _menu_add_body(system);
             
             break;
         }
         case 4:
         {
-            _nb_menu_remove_body(system);
+            _menu_remove_body(system);
             break;
         }
         case 5:
         {
             nb_float end_time, dt;
             nb_uint choose;
-            nb_menu_run_t run = {false, false};
+            menu_run_t run = {false, false};
 
             printf("Enter the end time of modeling:\n");
             while (true)
             {
-                end_time = _nb_menu_input_float();
+                end_time = _menu_input_float();
 
                 if (end_time <= 0.0)
                     printf("Error: end time must be greater than zero.\n");
@@ -111,7 +111,7 @@ void nb_menu_loop(nb_system *const system)
             printf("Enter a delta of time:\n");
             while (true)
             {
-                dt = _nb_menu_input_float();
+                dt = _menu_input_float();
 
                 if (dt <= 0.0)
                 {
@@ -129,7 +129,7 @@ void nb_menu_loop(nb_system *const system)
             printf("\t2: Only OpenMP technology.\n");
             printf("\t3: Both types of calculation.\n");
 
-            choose = _nb_menu_input_uint();
+            choose = _menu_input_uint();
 
             switch (choose)
             {
@@ -156,7 +156,7 @@ void nb_menu_loop(nb_system *const system)
             }
             }
 
-            nb_menu_run_system(system, end_time, dt, run);
+            menu_run_system(system, end_time, dt, run);
 
             break;
         }
@@ -165,9 +165,9 @@ void nb_menu_loop(nb_system *const system)
             char filename[NB_PATH_MAX];
 
             printf("Enter the path to file with extension\".nb\":\n");
-            _nb_menu_input_str(filename, NB_PATH_MAX);
+            _menu_input_str(filename, NB_PATH_MAX);
 
-            nb_menu_load_system(system, filename);
+            menu_load_system(system, filename);
 
             break;
         }
@@ -176,15 +176,15 @@ void nb_menu_loop(nb_system *const system)
             char filename[NB_PATH_MAX];
 
             printf("Enter the path to file with extension\".nb\":\n");
-            _nb_menu_input_str(filename, NB_PATH_MAX);
+            _menu_input_str(filename, NB_PATH_MAX);
 
-            nb_menu_save_system(system, filename);
+            menu_save_system(system, filename);
 
             break;
         }
         case 8:
         {
-            nb_menu_print_system(system, stdout);
+            menu_print_system(system, stdout);
             break;
         }
         case 9:
@@ -193,14 +193,14 @@ void nb_menu_loop(nb_system *const system)
             char filename[NB_PATH_MAX];
 
             printf("Enter the path to file:\n");
-            _nb_menu_input_str(filename, NB_PATH_MAX);
+            _menu_input_str(filename, NB_PATH_MAX);
 
             file = fopen(filename, "wt");
 
             if (file == NULL)
                 printf("Error: failed to create this file.\n");
             else
-                nb_menu_print_system(system, file);
+                menu_print_system(system, file);
 
             fclose(file);
 
@@ -226,7 +226,7 @@ void nb_menu_loop(nb_system *const system)
     printf("The program has completed its work.\n");
 }
 
-void nb_menu_rand(nb_system *const system, nb_uint count,
+void menu_rand(nb_system *const system, nb_uint count,
     const nb_rand_settings *const settings) 
 {
     char name[NB_NAME_MAX];
@@ -236,7 +236,7 @@ void nb_menu_rand(nb_system *const system, nb_uint count,
     name[NB_NAME_MAX - 1] = '\0';
 
     // Setting seed to random numbers generator
-    #ifdef NB_MENU_DEBUG
+    #ifdef MENU_DEBUG
     nb_rand_srand(0);
     #else
     nb_rand_srand((nb_uint)time((time_t*)NULL));
@@ -277,8 +277,8 @@ void nb_menu_rand(nb_system *const system, nb_uint count,
         printf("System was successfully initialized.\n"); 
 }
 
-void nb_menu_run_system(nb_system *const system, nb_float end_time,
-    nb_float dt, nb_menu_run_t run)
+void menu_run_system(nb_system *const system, nb_float end_time,
+    nb_float dt, menu_run_t run)
 {
     double timework;
     size_t num_iter = end_time / dt;
@@ -342,11 +342,11 @@ void nb_menu_run_system(nb_system *const system, nb_float end_time,
         printf("The simulation of the system is completed.\n");
         printf("Simulation time: %.3f sec.\n", timework);
 
-        _nb_menu_compare_systems(system, &copy);
+        _menu_compare_systems(system, &copy);
     }
 }
 
-void _nb_menu_compare_systems(const nb_system *const system1,
+void _menu_compare_systems(const nb_system *const system1,
     const nb_system *const system2)
 {
     // Average values of:
@@ -438,7 +438,7 @@ void _nb_menu_compare_systems(const nb_system *const system1,
     }
 }
 
-void nb_menu_load_system(nb_system *const system, const char *const filename)
+void menu_load_system(nb_system *const system, const char *const filename)
 {
     FILE* file;
 
@@ -474,7 +474,7 @@ void nb_menu_load_system(nb_system *const system, const char *const filename)
     fclose(file);
 }
 
-void nb_menu_save_system(const nb_system *const system,
+void menu_save_system(const nb_system *const system,
     const char *const filename)
 {
     FILE* file;
@@ -496,7 +496,7 @@ void nb_menu_save_system(const nb_system *const system,
     fclose(file);
 }
 
-void nb_menu_print_system(const nb_system *const system, FILE* stream)
+void menu_print_system(const nb_system *const system, FILE* stream)
 {
     if (!nb_system_print(system, stream))
         printf("Error: failed to print system.\n");
@@ -504,7 +504,7 @@ void nb_menu_print_system(const nb_system *const system, FILE* stream)
         printf("The system was successfully printed to this file.\n");
 }
 
-void _nb_menu_print()
+void _menu_print()
 {
     printf("Menu:\n");
     printf("\t1: Generate a random system of \"n\" bodies.\n");
@@ -519,7 +519,7 @@ void _nb_menu_print()
     printf("\t10: Exit.\n");
 }
 
-void _nb_menu_settings_loop(nb_rand_settings *const settings)
+void _menu_settings_loop(nb_rand_settings *const settings)
 {
     bool is_exit = false;
     nb_uint choose;
@@ -528,19 +528,19 @@ void _nb_menu_settings_loop(nb_rand_settings *const settings)
     {
         nb_float min, max;
 
-        _nb_menu_print_settings(settings);
+        _menu_print_settings(settings);
 
-        choose = _nb_menu_input_uint();
+        choose = _menu_input_uint();
 
         if (choose >= 1 && choose <= 4)
         {
             while (true)
             {
                 printf("Enter the minimum generator value:\n");
-                min = _nb_menu_input_float();
+                min = _menu_input_float();
 
                 printf("Enter the maximum generator value:\n");
-                max = _nb_menu_input_float();
+                max = _menu_input_float();
 
                 if (min > max)
                 {
@@ -627,7 +627,7 @@ void _nb_menu_settings_loop(nb_rand_settings *const settings)
     }
 }
 
-void _nb_menu_print_settings(const nb_rand_settings *const settings)
+void _menu_print_settings(const nb_rand_settings *const settings)
 {
     printf("Settings of random generation:\n");
     printf("\t1: Set min and max generator values for coodinates.\n");
@@ -638,12 +638,12 @@ void _nb_menu_print_settings(const nb_rand_settings *const settings)
     printf("\t6: Exit.\n");
 }
 
-void _nb_menu_add_body(nb_system *const system)
+void _menu_add_body(nb_system *const system)
 {
     nb_body body;
 
     printf("Enter a body information:\n");
-    _nb_menu_input_body(&body);
+    _menu_input_body(&body);
 
     nb_system_add_body(system, &body);
     if (errno != 0)
@@ -660,12 +660,12 @@ void _nb_menu_add_body(nb_system *const system)
         printf("Body was successfully added to the system.\n");
 }
 
-void _nb_menu_remove_body(nb_system *const system)
+void _menu_remove_body(nb_system *const system)
 {
     size_t index;
 
     printf("Enter the index of removing body:\n");
-    index = _nb_menu_input_uint();
+    index = _menu_input_uint();
 
     nb_system_remove_body(system, index);
     if (errno == ENOMEM)
@@ -677,7 +677,7 @@ void _nb_menu_remove_body(nb_system *const system)
     }
 }
 
-nb_int _nb_menu_input_int()
+nb_int _menu_input_int()
 {
     nb_int val;
     char buffer[NB_NAME_MAX];
@@ -686,7 +686,7 @@ nb_int _nb_menu_input_int()
     buffer[NB_NAME_MAX - 1] = '\0';
 
     while (true) {
-        _nb_menu_input_str(buffer, NB_NAME_MAX);
+        _menu_input_str(buffer, NB_NAME_MAX);
         errno = 0;
         
         val = (nb_int)strtol(buffer, &endptr, 0);
@@ -705,7 +705,7 @@ nb_int _nb_menu_input_int()
     return val;
 }
 
-nb_uint _nb_menu_input_uint()
+nb_uint _menu_input_uint()
 {
     nb_uint val;
     char buffer[NB_NAME_MAX];
@@ -715,7 +715,7 @@ nb_uint _nb_menu_input_uint()
 
     while (true)
     {
-        _nb_menu_input_str(buffer, NB_NAME_MAX);
+        _menu_input_str(buffer, NB_NAME_MAX);
         errno = 0;
 
         val = (nb_uint)strtoul(buffer, &endptr, 0);
@@ -734,7 +734,7 @@ nb_uint _nb_menu_input_uint()
     return val;
 }
 
-nb_float _nb_menu_input_float() {
+nb_float _menu_input_float() {
     nb_float val;
     char buffer[NB_NAME_MAX];
     char* endptr = buffer;
@@ -743,7 +743,7 @@ nb_float _nb_menu_input_float() {
 
     while (true)
     {
-        _nb_menu_input_str(buffer, NB_NAME_MAX);
+        _menu_input_str(buffer, NB_NAME_MAX);
         errno = 0;
 
         #if NB_FLOAT_PRECISION == 1
@@ -768,7 +768,7 @@ nb_float _nb_menu_input_float() {
     return val;
 }
 
-char* _nb_menu_input_str(char* const buffer, size_t buffer_size)
+char* _menu_input_str(char* const buffer, size_t buffer_size)
 {
     char* result;
     
@@ -781,39 +781,39 @@ char* _nb_menu_input_str(char* const buffer, size_t buffer_size)
     return result;
 }
 
-void _nb_menu_input_vector(nb_vector2 *const vector)
+void _menu_input_vector(nb_vector2 *const vector)
 {
     nb_float x, y;
 
     printf("Input component \"x\":\n");
-    x = _nb_menu_input_float();
+    x = _menu_input_float();
     printf("Input component \"y\":\n");
-    y = _nb_menu_input_float();
+    y = _menu_input_float();
 
     nb_vector2_init(vector, x, y);
 }
 
-void _nb_menu_input_body(nb_body *const body)
+void _menu_input_body(nb_body *const body)
 {
     char name[NB_NAME_MAX];
     nb_vector2 coords, speed, force;
     nb_float mass, radius;
 
     printf("Input name:\n");
-    _nb_menu_input_str(name, NB_NAME_MAX);
+    _menu_input_str(name, NB_NAME_MAX);
 
     printf("Input coordinates:\n");
-    _nb_menu_input_vector(&coords);
+    _menu_input_vector(&coords);
     
     printf("Input speed:\n");
-    _nb_menu_input_vector(&speed);
+    _menu_input_vector(&speed);
 
     nb_vector2_init(&force, 0.0, 0.0);
 
     while (true)
     {
         printf("Input mass:\n");
-        mass = _nb_menu_input_float();
+        mass = _menu_input_float();
 
         if (mass <= 0.0)
             printf("Error: mass must be greater than zero.\n");
@@ -824,7 +824,7 @@ void _nb_menu_input_body(nb_body *const body)
     while (true)
     {
         printf("Input radius:\n");
-        radius = _nb_menu_input_float();
+        radius = _menu_input_float();
 
         if (radius <= 0.0)
             printf("Error: radius must be greater than zero.\n");

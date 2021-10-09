@@ -4,7 +4,7 @@
 
 #include <errno.h>
 
-#include "nb_menu.h"
+#include "menu.h"
 
 
 int main() 
@@ -17,7 +17,7 @@ int main()
         printf("Critical error: failed to initializing system.\n");
         return -1;
     }
-    nb_menu_loop(&system);
+    menu_loop(&system);
 
     return 0;
 }
