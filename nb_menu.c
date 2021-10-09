@@ -235,6 +235,13 @@ void nb_menu_rand(nb_system *const system, nb_uint count,
 
     name[NB_NAME_MAX - 1] = '\0';
 
+    // Setting seed to random numbers generator
+    #if NB_MENU_DEBUG
+    nb_rand_srand(0);
+    #else
+    nb_rand_srand((nb_uint)time((time_t*)NULL));
+    #endif
+
     nb_system_clear(system);
     if (errno == ENOMEM)
     {

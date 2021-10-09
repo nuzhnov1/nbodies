@@ -3,6 +3,11 @@
 #include <stdlib.h>
 
 
+void nb_rand_srand(nb_uint seed)
+{
+    srand(seed);
+}
+
 nb_int nb_rand_int(nb_int min, nb_int max)
 {
     nb_int temp = rand();

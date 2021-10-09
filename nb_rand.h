@@ -14,6 +14,7 @@ typedef struct nb_rand_settings
 } nb_rand_settings;
 
 
+void nb_rand_srand(nb_uint seed);
 nb_int nb_rand_int(nb_int min, nb_int max);
 nb_int nb_rand_uint(nb_uint min, nb_uint max);
 nb_float nb_rand_float(nb_float min, nb_float max);
