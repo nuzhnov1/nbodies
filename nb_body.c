@@ -75,9 +75,15 @@ bool nb_body_read(nb_body *const body, FILE* stream)
 
     // read body name
     int chr = getc(stream);
-    for (size_t i = 0; chr != '\0' && chr != EOF && i < NB_NAME_MAX - 1; i++)
+    for (size_t i = 0; i < NB_NAME_MAX - 1; i++)
     {
+        if (chr == '\0' || chr == EOF)
+        {
+            temp_name[i] = '\0';
+            break;
+        }
         temp_name[i] = (char)chr;
+        
         chr = getc(stream);
     }
     temp_name[NB_NAME_MAX - 1] = '\0';
