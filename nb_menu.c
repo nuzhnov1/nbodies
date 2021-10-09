@@ -282,8 +282,11 @@ void nb_menu_run_system(nb_system *const system, nb_float end_time,
         printf("The system is being modeled in sequential mode...\n");
 
         start = clock();
-        for (nb_float cur = 0.0; cur < end_time; cur += dt)
+        for (nb_float cur = 0.0; fabsl(cur - end_time) > NB_FLOAT_EPSILON; 
+            cur += dt)
+        {
             nb_system_run(system, dt, false);
+        }
         finish = clock();
         timework = (finish - start) / (double)CLOCKS_PER_SEC;
         printf("The simulation of the system is completed.\n");
@@ -296,8 +299,11 @@ void nb_menu_run_system(nb_system *const system, nb_float end_time,
         printf("The system is being modeled in parallel mode...\n");
 
         start = omp_get_wtime();
-        for (nb_float cur = 0.0; cur < end_time; cur += dt)
+        for (nb_float cur = 0.0; fabsl(cur < end_time) > NB_FLOAT_EPSILON; 
+            cur += dt)
+        {
             nb_system_run(system, dt, true);
+        }
         finish = omp_get_wtime();
         timework = finish - start;
         printf("The simulation of the system is completed.\n");
@@ -318,8 +324,11 @@ void nb_menu_run_system(nb_system *const system, nb_float end_time,
 
         printf("The system is being modeled in sequential mode...\n");
         seq_start = clock();
-        for (nb_float cur = 0.0; cur < end_time; cur += dt)
+        for (nb_float cur = 0.0; fabsl(cur - end_time) > NB_FLOAT_EPSILON; 
+            cur += dt)
+        {
             nb_system_run(system, dt, false);
+        }
         seq_finish = clock();
         timework = (seq_finish - seq_start) / (double)CLOCKS_PER_SEC;
         printf("The simulation of the system is completed.\n");
@@ -327,8 +336,11 @@ void nb_menu_run_system(nb_system *const system, nb_float end_time,
         
         printf("The system is being modeled in parallel mode...\n");
         par_start = omp_get_wtime();
-        for (nb_float cur = 0.0; cur < end_time; cur += dt)
+        for (nb_float cur = 0.0; fabsl(cur - end_time) > NB_FLOAT_EPSILON; 
+            cur += dt)
+        {
             nb_system_run(&copy, dt, true);
+        }
         par_finish = omp_get_wtime();
         timework = par_finish - par_start;
         printf("The simulation of the system is completed.\n");
@@ -356,7 +368,8 @@ void _nb_menu_compare_systems(const nb_system *const system1,
     nb_vector2_init_default(&ae_force);
     nb_vector2_init_default(&re_force);
 
-    nb_body* body1, *body2;
+    nb_body* body1;
+    nb_body* body2;
     nb_vector2 vec;
 
     printf("Comparison system 2 relative to system1:\n");
@@ -524,7 +537,7 @@ void _nb_menu_settings_loop(nb_rand_settings *const settings)
                 printf("Enter the maximum generator value:\n");
                 max = _nb_menu_input_float();
 
-                if (min > max)
+                if (fabsl(min - max) > NB_FLOAT_EPSILON)
                 {
                     printf("Error: minimum value greater then maximum "
                         "value.\n");
@@ -808,7 +821,7 @@ void _nb_menu_input_body(nb_body *const body)
         printf("Input radius:\n");
         radius = _nb_menu_input_float();
 
-        if (radius < 0.0)
+        if (radius <= 0.0)
             printf("Error: radius must be greater than zero.\n");
         else
             break;
