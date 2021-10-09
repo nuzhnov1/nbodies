@@ -3,40 +3,40 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
+#include <errno.h>
 
 #include "nb_calculation.h"
 
 
-bool nb_system_init_default(nb_system *const system)
-{
-    system->count = 0;
-    system->capacity = 1;
-    system->time = 0.0;
-    
-    void* mem_p = malloc(sizeof(nb_body));
-    
-    if (mem_p == NULL)
+void nb_system_init_default(nb_system *const system)
+{   
+    system->bodies = (nb_body*)malloc(sizeof(nb_body));
+    if (system->bodies == NULL || errno != 0)
     {
-        system->bodies = NULL;
         system->capacity = 0;
-        
-        return false;
+        return;
     }
     else
-    {
-        system->bodies = (nb_body*)mem_p;
-        return true;
-    }
+        system->capacity = 1;
+    
+    system->_calc_buf = malloc(sizeof(nb_float) * 2);
+    system->count = 0;
+    system->time = 0.0;
 }
 
-bool nb_system_copy(nb_system *const system, const nb_system *const copy)
+void nb_system_copy(nb_system *const system, const nb_system *const copy)
 {
     void* mem_p = malloc(sizeof(nb_body) * copy->capacity);
-
-    if (mem_p == NULL)
-        return false;
+    if (mem_p == NULL || errno != 0)
+        return;
     else
         system->bodies = (nb_body*)mem_p;
+
+    mem_p = malloc(sizeof(nb_float) * copy->capacity * 2);
+    if (mem_p == NULL || errno != 0)
+        return;
+    else
+        system->_calc_buf = mem_p;
 
     for (size_t i = 0; i < copy->count; i++)
         nb_body_copy(&system->bodies[i], &copy->bodies[i]);
@@ -44,8 +44,6 @@ bool nb_system_copy(nb_system *const system, const nb_system *const copy)
     system->count = copy->count;
     system->capacity = copy->capacity;
     system->time = copy->time;
-
-    return true;
 }
 
 const nb_system* nb_system_assign(nb_system *const system,
@@ -60,11 +58,17 @@ const nb_system* nb_system_assign(nb_system *const system,
         nb_system_destroy(system);
 
         void* mem_p = malloc(sizeof(nb_body) * copy->capacity);
-
-        if (mem_p == NULL)
+        if (mem_p == NULL || errno != 0)
             return NULL;
+        else
+            system->bodies = (nb_body*)mem_p;
+        
+        mem_p = malloc(sizeof(nb_float) * copy->capacity * 2);
+        if (mem_p == NULL || errno != 0)
+            return NULL;
+        else
+            system->_calc_buf = mem_p;
 
-        system->bodies = (nb_body*)mem_p;
         system->capacity = copy->capacity;
     }
 
@@ -79,48 +83,59 @@ const nb_system* nb_system_assign(nb_system *const system,
 
 void nb_system_destroy(nb_system *const system)
 {
-    if (system->bodies != NULL)
+    if (system->bodies != NULL && system->_calc_buf != NULL)
     {
-        free((void*)system->bodies);
+        free(system->bodies);
+        free(system->_calc_buf);
         system->bodies = NULL;
+        system->_calc_buf = NULL;
         system->capacity = 0;
         system->count = 0;
         system->time = 0.0;
     }
 }
 
-bool nb_system_add_body(nb_system *const system, const nb_body *const body)
+void nb_system_add_body(nb_system *const system, const nb_body *const body)
 {
     size_t last = system->count;
     
     if (system->capacity == 0)
-        return false;
+        return;
 
     if (system->count + 1 > system->capacity)
     {
         size_t new_capacity = system->capacity * 2;
-        void* mem_p = malloc(sizeof(nb_body) * new_capacity);
 
-        if (mem_p == NULL)
-            return false;
+        void* mem_p = malloc(sizeof(nb_body) * new_capacity);
+        if (mem_p == NULL || errno != 0)
+            return;
+        else
+        {
+            memcpy(mem_p, system->bodies, sizeof(nb_body) * system->count);
+            free(system->bodies);
+            system->bodies = (nb_body*)mem_p;
+        }
+
+        mem_p = malloc(sizeof(nb_float) * new_capacity * 2);
+        if (mem_p == NULL || errno != 0)
+            return;
+        else
+        {
+            free(system->_calc_buf);
+            system->_calc_buf = mem_p;
+        }
         
-        memcpy(mem_p, (const void*)system->bodies,
-            sizeof(nb_body) * system->count);
-        free((void*)system->bodies);
-        system->bodies = (nb_body*)mem_p;
         system->capacity = new_capacity;
     }
 
     nb_body_copy(&system->bodies[last], body);
     system->count++;
-
-    return true;
 }
 
-bool nb_system_remove_body(nb_system *const system, size_t index)
+void nb_system_remove_body(nb_system *const system, size_t index)
 {
     if (index >= system->count)
-        return false;
+        return;
     
     for (size_t i = index; i < system->count - 1; i++)
         nb_body_copy(&system->bodies[i], &system->bodies[i + 1]);
@@ -128,27 +143,41 @@ bool nb_system_remove_body(nb_system *const system, size_t index)
     if (system->count - 1 < system->capacity / 4)
     {
         size_t new_capacity = system->capacity / 4;
+        
         void* mem_p = malloc(sizeof(nb_body) * new_capacity);
-
-        if (mem_p == NULL)
+        if (mem_p == NULL || errno != 0)
         {
             system->count--;
-            return true;
+            return;
+        }
+        else
+        {
+            memcpy(mem_p, system->bodies, 
+                sizeof(nb_body) * (system->count - 1));
+            free(system->bodies);
+            system->bodies = (nb_body*)mem_p;
+            system->count--;
         }
 
-        memcpy(mem_p, (const void*)system->bodies,
-            sizeof(nb_body) * (system->count - 1));
-        free((void*)system->bodies);
-        system->bodies = (nb_body*)mem_p;
+        mem_p = malloc(sizeof(nb_float) * new_capacity * 2);
+        if (mem_p == NULL || errno != 0)
+        {
+            system->count--;
+            return;
+        }
+        else
+        {
+            free(system->_calc_buf);
+            system->_calc_buf = mem_p;
+        }
+
         system->capacity = new_capacity;
     }
 
     system->count--;
-
-    return true;
 }
 
-bool nb_system_clear(nb_system *const system)
+void nb_system_clear(nb_system *const system)
 {
     nb_system_destroy(system);
     return nb_system_init_default(system);
@@ -170,8 +199,8 @@ bool nb_system_read(nb_system *const system, FILE* stream)
     size_t count;
     nb_float time;
 
-    is_read &= (bool)(fread((void*)&count, sizeof(size_t), 1, stream) == 1);
-    is_read &= (bool)(fread((void*)&time, sizeof(nb_float), 1, stream) == 1);
+    is_read &= fread(&count, sizeof(size_t), 1, stream) == 1;
+    is_read &= fread(&time, sizeof(nb_float), 1, stream) == 1;
 
     if (!is_read)
         return false;
@@ -185,7 +214,8 @@ bool nb_system_read(nb_system *const system, FILE* stream)
         if (!is_read)
             break;
         
-        if (!nb_system_add_body(system, &body))
+        nb_system_add_body(system, &body);
+        if (errno != 0)
         {
             is_read = false;
             break;
@@ -199,14 +229,24 @@ bool nb_system_read(nb_system *const system, FILE* stream)
     if (new_capacity != system->capacity)
     {
         void* mem_p = malloc(sizeof(nb_body) * new_capacity);
-
-        if (mem_p == NULL)
+        if (mem_p == NULL || errno != 0)
             return is_read;
+        else
+        {
+            memcpy(mem_p, system->bodies, sizeof(nb_body) * system->count);
+            free(system->bodies);
+            system->bodies = (nb_body*)mem_p;
+        }
 
-        memcpy(mem_p, (const void*)system->bodies,
-            sizeof(nb_body) * system->count);
-        free((void*)system->bodies);
-        system->bodies = (nb_body*)mem_p;
+        mem_p = malloc(sizeof(nb_float) * new_capacity * 2);
+        if (mem_p == NULL || errno != 0)
+            return is_read;
+        else
+        {
+            free(system->_calc_buf);
+            system->_calc_buf = mem_p;
+        }
+
         system->capacity = new_capacity;
     }
 
@@ -217,10 +257,8 @@ bool nb_system_write(const nb_system *const system, FILE* stream)
 {
     bool is_write = true;
 
-    is_write &= (bool)(fwrite((const void*)&system->count, sizeof(size_t),
-        1, stream) == 1);
-    is_write &= (bool)(fwrite((const void*)&system->time, sizeof(nb_float),
-        1, stream) == 1);
+    is_write &= fwrite(&system->count, sizeof(size_t), 1, stream) == 1;
+    is_write &= fwrite(&system->time, sizeof(nb_float), 1, stream) == 1;
 
     for (size_t i = 0; i < system->count; i++)
     {
@@ -237,20 +275,19 @@ bool nb_system_print(const nb_system *const system, FILE* stream)
 {
     bool is_print = true;
 
-    is_print &= (bool)(fprintf(stream, "System information:\n") > 0);
-    is_print &= (bool)(fprintf(stream, "Count of bodies: %lu\n",
-        system->count) > 0);
+    is_print &= fprintf(stream, "System information:\n") > 0;
+    is_print &= fprintf(stream, "Count of bodies: %lu\n", system->count) > 0;
     #if NB_SYSTEM_DEBUG
-    is_print &= (bool)(fprintf(stream, "System capacity: %lu\n",
-        system->capacity) > 0);
+    is_print &= fprintf(stream, "System capacity: %lu\n",
+        system->capacity) > 0;
     #endif
-    is_print &= (bool)(fprintf(stream, "Time: %lf\n\n", system->time) > 0);
+    is_print &= fprintf(stream, "Time: %lf\n\n", system->time) > 0;
 
     for (size_t i = 0; i < system->count; i++)
     {
-        is_print &= (bool)(fprintf(stream, "Body index: %lu\n", i) > 0);
+        is_print &= fprintf(stream, "Body index: %lu\n", i) > 0;
         is_print &= nb_body_print(&system->bodies[i], stream);
-        is_print &= (bool)(fprintf(stream, "\n") > 0);
+        is_print &= fprintf(stream, "\n") > 0;
 
         if (!is_print)
             break;

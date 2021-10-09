@@ -235,7 +235,8 @@ void nb_menu_rand(nb_system *const system, nb_uint count,
 
     name[NB_NAME_MAX - 1] = '\0';
 
-    if (!nb_system_clear(system))
+    nb_system_clear(system);
+    if (errno == ENOMEM)
     {
         printf("Critical error: failed to allocate memory. "
             "System was destroyed!\n");
@@ -247,9 +248,13 @@ void nb_menu_rand(nb_system *const system, nb_uint count,
     {
         snprintf(name, NB_NAME_MAX - 1, "Body %lu", i + 1);
         nb_rand_body(&body, name, settings);
-        if (!nb_system_add_body(system, &body)) {
+        nb_system_add_body(system, &body);
+        if (errno != 0)
+        {
+            int err = errno;
+
             printf("Error: failed to add body in system.");
-            if (errno == ENOMEM)
+            if (err == ENOMEM)
                 printf(" There is not enough memory to create a body.\n");
             else
                 printf("\n");
@@ -304,7 +309,8 @@ void nb_menu_run_system(nb_system *const system, nb_float end_time,
         clock_t seq_start, seq_finish;
         double par_start, par_finish;
 
-        if (!nb_system_copy(&copy, system))
+        nb_system_copy(&copy, system);
+        if (errno != 0)
         {
             printf("Error: failed to create copy of system.\n");
             return;
@@ -428,8 +434,21 @@ void nb_menu_load_system(nb_system *const system, const char *const filename)
     printf("Reading the data from this file...\n");
     if (!nb_system_read(system, file))
     {
-        printf("Error: failed to read data from this file.\n");
+        int err = errno;
+
+        printf("Error: failed to read data from this file.");
+        if (err == ENOMEM)
+            printf(" There is not enough memory to create system.\n");
+        else
+            printf("\n");
+        errno = 0;
+
         nb_system_init_default(system);
+        if (errno == ENOMEM)
+        {
+            printf("Critical error: failed to initializing system.\n");
+            exit(EXIT_FAILURE);
+        }
     }
     else
         printf("The data was successfully read from this file.\n");
@@ -608,8 +627,11 @@ void _nb_menu_add_body(nb_system *const system)
     printf("Enter a body information:\n");
     _nb_menu_input_body(&body);
 
-    if (!nb_system_add_body(system, &body))
+    nb_system_add_body(system, &body);
+    if (errno != 0)
     {
+        int err = errno;
+
         printf("Error: failed to add body in system.");
         if (errno == ENOMEM)
             printf(" There is not enough memory to create a body.\n");
@@ -627,8 +649,9 @@ void _nb_menu_remove_body(nb_system *const system)
     printf("Enter the index of removing body:\n");
     index = _nb_menu_input_uint();
 
-    if (!nb_system_remove_body(system, index))
-        printf("Error: failed to remove body from system at that index.\n");
+    nb_system_remove_body(system, index);
+    if (errno == ENOMEM)
+        printf("Error: failed to allocate memory.\n");
     else
     {
         printf("The body at that index was successfully removed from the "
@@ -716,8 +739,10 @@ nb_float _nb_menu_input_float() {
         if (errno == ERANGE)
             printf("Error: the number is out of the allowed range.\n");
         else if (*endptr != '\0')
+        {
             printf("Error: failed to conversion input string to float "
                 "number.\n");
+        }
         else
             break;
     }
