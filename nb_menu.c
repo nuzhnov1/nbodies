@@ -412,21 +412,30 @@ void _nb_menu_compare_systems(const nb_system *const system1,
     printf("Average absolute error of coordinates: ");
     nb_vector2_print(&ae_coords, stdout);
     printf("\n");
-    printf("Average relative error of coordinates(%%): ");
-    nb_vector2_print(&re_coords, stdout);
-    printf("\n");
+    if (!(isnan(re_coords.x) || isnan(re_coords.y)))
+    {
+        printf("Average relative error of coordinates(%%): ");
+        nb_vector2_print(&re_coords, stdout);
+        printf("\n");
+    }
     printf("Average absolute error of speed: ");
     nb_vector2_print(&ae_speed, stdout);
     printf("\n");
-    printf("Average relative error of speed(%%): ");
-    nb_vector2_print(&re_speed, stdout);
-    printf("\n");
+    if (!(isnan(re_speed.x) || isnan(re_speed.y)))
+    {
+        printf("Average relative error of speed(%%): ");
+        nb_vector2_print(&re_speed, stdout);
+        printf("\n");
+    }
     printf("Average absolute error of force: ");
     nb_vector2_print(&ae_force, stdout);
     printf("\n");
-    printf("Average relative error of force(%%): ");
-    nb_vector2_print(&re_force, stdout);
-    printf("\n");
+    if (!(isnan(re_force.x) || isnan(re_force.y)))
+    {
+        printf("Average relative error of force(%%): ");
+        nb_vector2_print(&re_force, stdout);
+        printf("\n");
+    }
 }
 
 void nb_menu_load_system(nb_system *const system, const char *const filename)
