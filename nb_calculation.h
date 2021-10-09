@@ -2,7 +2,7 @@
 #define NB_CALCULATION_H
 
 
-#define NB_CALCULATION_DEBUG
+#undef NB_CALCULATION_DEBUG
 
 
 #include "nb_system.h"
