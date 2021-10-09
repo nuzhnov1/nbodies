@@ -281,6 +281,7 @@ void nb_menu_run_system(nb_system *const system, nb_float end_time,
     nb_float dt, nb_menu_run_t run)
 {
     double timework;
+    size_t num_iter = end_time / dt;
 
     if (run.seq && !run.openmp)
     {
@@ -289,11 +290,8 @@ void nb_menu_run_system(nb_system *const system, nb_float end_time,
         printf("The system is being modeled in sequential mode...\n");
 
         start = clock();
-        for (nb_float cur = 0.0; fabsl(cur - end_time) > NB_FLOAT_EPSILON; 
-            cur += dt)
-        {
+        for (size_t i = 0; i < num_iter; i++)
             nb_system_run(system, dt, false);
-        }
         finish = clock();
         timework = (finish - start) / (double)CLOCKS_PER_SEC;
         printf("The simulation of the system is completed.\n");
@@ -306,11 +304,8 @@ void nb_menu_run_system(nb_system *const system, nb_float end_time,
         printf("The system is being modeled in parallel mode...\n");
 
         start = omp_get_wtime();
-        for (nb_float cur = 0.0; fabsl(cur < end_time) > NB_FLOAT_EPSILON; 
-            cur += dt)
-        {
+        for (size_t i = 0; i < num_iter; i++)
             nb_system_run(system, dt, true);
-        }
         finish = omp_get_wtime();
         timework = finish - start;
         printf("The simulation of the system is completed.\n");
@@ -331,11 +326,8 @@ void nb_menu_run_system(nb_system *const system, nb_float end_time,
 
         printf("The system is being modeled in sequential mode...\n");
         seq_start = clock();
-        for (nb_float cur = 0.0; fabsl(cur - end_time) > NB_FLOAT_EPSILON; 
-            cur += dt)
-        {
+        for (size_t i = 0; i < num_iter; i++)
             nb_system_run(system, dt, false);
-        }
         seq_finish = clock();
         timework = (seq_finish - seq_start) / (double)CLOCKS_PER_SEC;
         printf("The simulation of the system is completed.\n");
@@ -343,11 +335,8 @@ void nb_menu_run_system(nb_system *const system, nb_float end_time,
         
         printf("The system is being modeled in parallel mode...\n");
         par_start = omp_get_wtime();
-        for (nb_float cur = 0.0; fabsl(cur - end_time) > NB_FLOAT_EPSILON; 
-            cur += dt)
-        {
+        for (size_t i = 0; i < num_iter; i++)
             nb_system_run(&copy, dt, true);
-        }
         par_finish = omp_get_wtime();
         timework = par_finish - par_start;
         printf("The simulation of the system is completed.\n");

@@ -36,16 +36,13 @@ typedef long long nb_int;
 typedef unsigned long long nb_uint;
 #endif
 
-// choosing precision and epsilon for float numbers
+// choosing precision for float numbers
 #if NB_FLOAT_PRECISION == 1
 typedef float nb_float;
-#define NB_FLOAT_EPSILON __FLT_EPSILON__
 #elif NB_FLOAT_PRECISION == 2
 typedef double nb_float;
-#define NB_FLOAT_EPSILON __DBL_EPSILON__
 #elif NB_FLOAT_PRECISION == 4
 typedef long double nb_float;
-#define NB_FLOAT_EPSILON __LDBL_EPSILON__
 #endif
 
 
