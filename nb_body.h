@@ -5,8 +5,6 @@
 #define NB_NAME_MAX 256
 
 
-#include <stdio.h>
-
 #include "nb_vector2.h"
 
 

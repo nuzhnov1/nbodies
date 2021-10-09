@@ -1,4 +1,5 @@
 #include "nb_vector2.h"
+
 #include <math.h>
 
 

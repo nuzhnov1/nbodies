@@ -2,8 +2,6 @@
 #define NB_MENU_H
 
 
-#include <stdio.h>
-
 #include "nb_system.h"
 #include "nb_rand.h"
 
