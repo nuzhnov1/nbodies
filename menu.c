@@ -24,7 +24,7 @@ static void _menu_input_vector(nb_vector2 *const vector);
 static void _menu_input_body(nb_body *const body);
 
 
-const nb_rand_settings default_settings = 
+nb_rand_settings default_rand_settings = 
 {
     -100.0, 100.0,
     -10.0, 10.0,
@@ -35,7 +35,7 @@ const nb_rand_settings default_settings =
 
 void menu_loop(nb_system *const system)
 {
-    nb_rand_settings settings = default_settings;
+    nb_rand_settings settings = default_rand_settings;
     bool is_exit = false;
     nb_uint choose;
 
@@ -162,10 +162,10 @@ void menu_loop(nb_system *const system)
         }
         case 6:
         {
-            char filename[NB_PATH_MAX];
+            char filename[PATH_MAX];
 
             printf("Enter the path to file with extension\".nb\":\n");
-            _menu_input_str(filename, NB_PATH_MAX);
+            _menu_input_str(filename, PATH_MAX);
 
             menu_load_system(system, filename);
 
@@ -173,10 +173,10 @@ void menu_loop(nb_system *const system)
         }
         case 7:
         {
-            char filename[NB_PATH_MAX];
+            char filename[PATH_MAX];
 
             printf("Enter the path to file with extension\".nb\":\n");
-            _menu_input_str(filename, NB_PATH_MAX);
+            _menu_input_str(filename, PATH_MAX);
 
             menu_save_system(system, filename);
 
@@ -190,10 +190,10 @@ void menu_loop(nb_system *const system)
         case 9:
         {
             FILE* file;
-            char filename[NB_PATH_MAX];
+            char filename[PATH_MAX];
 
             printf("Enter the path to file:\n");
-            _menu_input_str(filename, NB_PATH_MAX);
+            _menu_input_str(filename, PATH_MAX);
 
             file = fopen(filename, "wt");
 
@@ -346,107 +346,17 @@ void menu_run_system(nb_system *const system, nb_float end_time,
     }
 }
 
-void _menu_compare_systems(const nb_system *const system1,
-    const nb_system *const system2)
-{
-    // Average values of:
-    nb_vector2 ae_coords;  // absolute error of coordinates
-    nb_vector2 re_coords;  // relative error of coordinates
-    nb_vector2 ae_speed;   // absolute error of speed
-    nb_vector2 re_speed;   // relative error of speed
-    nb_vector2 ae_force;   // absolute error of force
-    nb_vector2 re_force;   // relative error of force
-    
-    nb_vector2_init_default(&ae_coords);
-    nb_vector2_init_default(&re_coords);
-    nb_vector2_init_default(&ae_speed);
-    nb_vector2_init_default(&re_speed);
-    nb_vector2_init_default(&ae_force);
-    nb_vector2_init_default(&re_force);
-
-    nb_body* body1;
-    nb_body* body2;
-    nb_vector2 vec;
-
-    printf("Comparison system 2 relative to system1:\n");
-    printf("Number of bodies in system: %lu\n", system1->count);
-    printf("System time: %lf sec.\n", system1->time);
-
-    if (system1->count == 0)
-        return;
-
-    for (size_t i = 0; i < system1->count; i++)
-    {
-        body1 = &system1->bodies[i];
-        body2 = &system2->bodies[i];
-
-        vec = nb_vector2_sub(&body1->coords, &body2->coords);
-        vec.x = fabsl(vec.x), vec.y = fabsl(vec.y);
-        ae_coords = nb_vector2_add(&ae_coords, &vec);
-        vec.x = vec.x / fabsl(body1->coords.x) * 100;
-        vec.y = vec.y / fabsl(body1->coords.y) * 100;
-        re_coords = nb_vector2_add(&re_coords, &vec);
-
-        vec = nb_vector2_sub(&body1->speed, &body2->speed);
-        vec.x = fabsl(vec.x), vec.y = fabsl(vec.y);
-        ae_speed = nb_vector2_add(&ae_speed, &vec);
-        vec.x = vec.x / fabsl(body1->speed.x) * 100;
-        vec.y = vec.y / fabsl(body1->speed.y) * 100;
-        re_speed = nb_vector2_add(&re_speed, &vec);
-
-        vec = nb_vector2_sub(&body1->force, &body2->force);
-        vec.x = fabsl(vec.x), vec.y = fabsl(vec.y);
-        ae_force = nb_vector2_add(&ae_force, &vec);
-        vec.x = vec.x / fabsl(body1->force.x) * 100;
-        vec.y = vec.y / fabsl(body1->force.y) * 100;
-        re_force = nb_vector2_add(&re_force, &vec);
-    }
-
-    nb_vector2_mul(&ae_coords, 1 / system1->count);
-    nb_vector2_mul(&re_coords, 1 / system1->count);
-    nb_vector2_mul(&ae_speed, 1 / system1->count);
-    nb_vector2_mul(&re_speed, 1 / system1->count);
-    nb_vector2_mul(&ae_force, 1 / system1->count);
-    nb_vector2_mul(&re_force, 1 / system1->count);
-
-    printf("Average absolute error of coordinates: ");
-    nb_vector2_print(&ae_coords, stdout);
-    printf("\n");
-    if (!(isnan(re_coords.x) || isnan(re_coords.y)))
-    {
-        printf("Average relative error of coordinates(%%): ");
-        nb_vector2_print(&re_coords, stdout);
-        printf("\n");
-    }
-    printf("Average absolute error of speed: ");
-    nb_vector2_print(&ae_speed, stdout);
-    printf("\n");
-    if (!(isnan(re_speed.x) || isnan(re_speed.y)))
-    {
-        printf("Average relative error of speed(%%): ");
-        nb_vector2_print(&re_speed, stdout);
-        printf("\n");
-    }
-    printf("Average absolute error of force: ");
-    nb_vector2_print(&ae_force, stdout);
-    printf("\n");
-    if (!(isnan(re_force.x) || isnan(re_force.y)))
-    {
-        printf("Average relative error of force(%%): ");
-        nb_vector2_print(&re_force, stdout);
-        printf("\n");
-    }
-}
-
-void menu_load_system(nb_system *const system, const char *const filename)
+bool menu_load_system(nb_system *const system, const char *const filename)
 {
     FILE* file;
+    bool status;
+    bool is_critical_err = false;
 
     file = fopen(filename, "rb");
 
     if (file == NULL) {
         printf("Error: failed to open this file.\n");
-        return;
+        return false;
     }
 
     printf("Reading the data from this file...\n");
@@ -465,43 +375,68 @@ void menu_load_system(nb_system *const system, const char *const filename)
         if (errno == ENOMEM)
         {
             printf("Critical error: failed to initializing system.\n");
-            exit(EXIT_FAILURE);
+            is_critical_err = true;
         }
+
+        status = false;
     }
     else
+    {
         printf("The data was successfully read from this file.\n");
+        status = true;
+    }
     
     fclose(file);
+
+    if (is_critical_err)
+        exit(EXIT_FAILURE);
+    else
+        return status;
 }
 
-void menu_save_system(const nb_system *const system,
+bool menu_save_system(const nb_system *const system,
     const char *const filename)
 {
     FILE* file;
+    bool status;
 
     file = fopen(filename, "wb");
 
     if (file == NULL)
     {
         printf("Error: failed to create this file.\n");
-        return;
+        return false;
     }
 
     printf("Writing the data to this file...\n");
     if (!nb_system_write(system, file))
+    {
         printf("Error: failed to write data to this file.\n");
+        status = false;
+    }
     else
+    {
         printf("The data was successfully written to this file.\n");
+        status = true;
+    }
     
     fclose(file);
+
+    return status;
 }
 
-void menu_print_system(const nb_system *const system, FILE* stream)
+bool menu_print_system(const nb_system *const system, FILE* stream)
 {
     if (!nb_system_print(system, stream))
+    {
         printf("Error: failed to print system.\n");
+        return false;
+    }
     else if (stream != stdout)
+    {
         printf("The system was successfully printed to this file.\n");
+        return true;
+    }
 }
 
 void _menu_print()
@@ -674,6 +609,98 @@ void _menu_remove_body(nb_system *const system)
     {
         printf("The body at that index was successfully removed from the "
             "system.\n");
+    }
+}
+
+void _menu_compare_systems(const nb_system *const system1,
+    const nb_system *const system2)
+{
+    // Average values of:
+    nb_vector2 ae_coords;  // absolute error of coordinates
+    nb_vector2 re_coords;  // relative error of coordinates
+    nb_vector2 ae_speed;   // absolute error of speed
+    nb_vector2 re_speed;   // relative error of speed
+    nb_vector2 ae_force;   // absolute error of force
+    nb_vector2 re_force;   // relative error of force
+    
+    nb_vector2_init_default(&ae_coords);
+    nb_vector2_init_default(&re_coords);
+    nb_vector2_init_default(&ae_speed);
+    nb_vector2_init_default(&re_speed);
+    nb_vector2_init_default(&ae_force);
+    nb_vector2_init_default(&re_force);
+
+    nb_body* body1;
+    nb_body* body2;
+    nb_vector2 vec;
+
+    printf("Comparison system 2 relative to system1:\n");
+    printf("Number of bodies in system: %lu\n", system1->count);
+    printf("System time: %lf sec.\n", system1->time);
+
+    if (system1->count == 0)
+        return;
+
+    for (size_t i = 0; i < system1->count; i++)
+    {
+        body1 = &system1->bodies[i];
+        body2 = &system2->bodies[i];
+
+        vec = nb_vector2_sub(&body1->coords, &body2->coords);
+        vec.x = fabsl(vec.x), vec.y = fabsl(vec.y);
+        ae_coords = nb_vector2_add(&ae_coords, &vec);
+        vec.x = vec.x / fabsl(body1->coords.x) * 100;
+        vec.y = vec.y / fabsl(body1->coords.y) * 100;
+        re_coords = nb_vector2_add(&re_coords, &vec);
+
+        vec = nb_vector2_sub(&body1->speed, &body2->speed);
+        vec.x = fabsl(vec.x), vec.y = fabsl(vec.y);
+        ae_speed = nb_vector2_add(&ae_speed, &vec);
+        vec.x = vec.x / fabsl(body1->speed.x) * 100;
+        vec.y = vec.y / fabsl(body1->speed.y) * 100;
+        re_speed = nb_vector2_add(&re_speed, &vec);
+
+        vec = nb_vector2_sub(&body1->force, &body2->force);
+        vec.x = fabsl(vec.x), vec.y = fabsl(vec.y);
+        ae_force = nb_vector2_add(&ae_force, &vec);
+        vec.x = vec.x / fabsl(body1->force.x) * 100;
+        vec.y = vec.y / fabsl(body1->force.y) * 100;
+        re_force = nb_vector2_add(&re_force, &vec);
+    }
+
+    nb_vector2_mul(&ae_coords, 1 / system1->count);
+    nb_vector2_mul(&re_coords, 1 / system1->count);
+    nb_vector2_mul(&ae_speed, 1 / system1->count);
+    nb_vector2_mul(&re_speed, 1 / system1->count);
+    nb_vector2_mul(&ae_force, 1 / system1->count);
+    nb_vector2_mul(&re_force, 1 / system1->count);
+
+    printf("Average absolute error of coordinates: ");
+    nb_vector2_print(&ae_coords, stdout);
+    printf("\n");
+    if (!(isnan(re_coords.x) || isnan(re_coords.y)))
+    {
+        printf("Average relative error of coordinates(%%): ");
+        nb_vector2_print(&re_coords, stdout);
+        printf("\n");
+    }
+    printf("Average absolute error of speed: ");
+    nb_vector2_print(&ae_speed, stdout);
+    printf("\n");
+    if (!(isnan(re_speed.x) || isnan(re_speed.y)))
+    {
+        printf("Average relative error of speed(%%): ");
+        nb_vector2_print(&re_speed, stdout);
+        printf("\n");
+    }
+    printf("Average absolute error of force: ");
+    nb_vector2_print(&ae_force, stdout);
+    printf("\n");
+    if (!(isnan(re_force.x) || isnan(re_force.y)))
+    {
+        printf("Average relative error of force(%%): ");
+        nb_vector2_print(&re_force, stdout);
+        printf("\n");
     }
 }
 

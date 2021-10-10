@@ -5,12 +5,14 @@
 #define MENU_DEBUG
 
 
+#include <stdio.h>
+#include <limits.h>
+
 #include "nb_system.h"
 #include "nb_rand.h"
 
 
 #define NB_MAX_BODIES 65536
-#define NB_PATH_MAX 4096
 
 
 typedef struct menu_run_t
@@ -20,15 +22,18 @@ typedef struct menu_run_t
 } menu_run_t;
 
 
+extern nb_rand_settings default_rand_settings;
+
+
 void menu_loop(nb_system *const system);
 void menu_rand(nb_system *const system, nb_uint count,
     const nb_rand_settings *const settings);
 void menu_run_system(nb_system *const system, nb_float end_time,
     nb_float dt, menu_run_t run);
-void menu_load_system(nb_system *const system, const char *const filename);
-void menu_save_system(const nb_system *const system,
+bool menu_load_system(nb_system *const system, const char *const filename);
+bool menu_save_system(const nb_system *const system,
     const char *const filename);
-void menu_print_system(const nb_system *const system, FILE* stream);
+bool menu_print_system(const nb_system *const system, FILE* stream);
 
 
 #endif
