@@ -22,6 +22,7 @@ int main(int argc, char** argv)
     nb_system system;
     static arguments args;
 
+    // Very strange bug: clearing "args" after calling arg_parser
     if (!arg_parser((size_t)argc, argv, &args))
         return -1;
     
