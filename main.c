@@ -17,7 +17,9 @@ int main()
         printf("Critical error: failed to initializing system.\n");
         return -1;
     }
+    
     menu_loop(&system);
+    nb_system_destroy(&system);
 
     return 0;
 }
