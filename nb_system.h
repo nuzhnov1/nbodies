@@ -5,6 +5,8 @@
 #define NB_SYSTEM_DEBUG
 
 
+#include <stdio.h>
+
 #include "nb_body.h"
 
 
