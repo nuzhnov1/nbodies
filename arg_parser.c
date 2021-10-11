@@ -6,12 +6,12 @@
 
 
 static bool _parse_single_dash_args(size_t argc, char** argv, 
-    arguments *const args, size_t* const num);
+    arguments_t *const args, size_t* const num);
 static bool _parse_double_dash_args(size_t argc, char** argv, 
-    arguments *const args, size_t* const num);
+    arguments_t *const args, size_t* const num);
 
 
-arguments default_settings = 
+arguments_t default_settings = 
 {
     "\0", "\0",
     10.0, 0.1,
@@ -21,7 +21,7 @@ arguments default_settings =
 };
 
 
-bool arg_parser(size_t argc, char** argv, arguments *const args)
+bool arg_parser(size_t argc, char** argv, arguments_t *const args)
 {
     *args = default_settings;
 
@@ -63,7 +63,7 @@ bool arg_parser(size_t argc, char** argv, arguments *const args)
     return true;
 }
 
-bool _parse_single_dash_args(size_t argc, char** argv, arguments *const args, 
+bool _parse_single_dash_args(size_t argc, char** argv, arguments_t *const args, 
     size_t* const num)
 {
     size_t index = *num;
@@ -81,7 +81,7 @@ bool _parse_single_dash_args(size_t argc, char** argv, arguments *const args,
             if (arg[i + 1] != '\0' && strlen(arg) == 2)
             {
                 printf("Failed parse: argument \"-%c\" must not be included "
-                    "in the union of arguments.\n", flag);
+                    "in the union of arguments_t.\n", flag);
                 return false;
             }
 
@@ -137,7 +137,7 @@ bool _parse_single_dash_args(size_t argc, char** argv, arguments *const args,
             if (arg[i + 1] != '\0' && strlen(arg) == 2)
             {
                 printf("Failed parse: argument \"-f\" must not be included "
-                    "in the union of arguments.\n");
+                    "in the union of arguments_t.\n");
                 return false;
             }
             
@@ -190,7 +190,7 @@ bool _parse_single_dash_args(size_t argc, char** argv, arguments *const args,
     return true;
 }
 
-bool _parse_double_dash_args(size_t argc, char** argv, arguments *const args,
+bool _parse_double_dash_args(size_t argc, char** argv, arguments_t *const args,
     size_t* const num)
 {
     size_t index = *num;

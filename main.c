@@ -14,13 +14,13 @@
 
 
 bool _print_manual();
-bool _print_system(const nb_system *const system, arguments *const args);
+bool _print_system(const nb_system *const system, arguments_t *const args);
 
 
 int main(int argc, char** argv) 
 {
     nb_system system;
-    static arguments args;
+    static arguments_t args;
 
     // Very strange bug: clearing "args" after calling arg_parser
     if (!arg_parser((size_t)argc, argv, &args))
@@ -94,7 +94,7 @@ bool _print_manual()
     return true;
 }
 
-bool _print_system(const nb_system *const system, arguments *const args)
+bool _print_system(const nb_system *const system, arguments_t *const args)
 {
     if (args->filename[0] == '\0')
     {
