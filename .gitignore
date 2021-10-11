@@ -8,3 +8,6 @@
 *.txt
 nbodies
 
+
+# Include files
+!nbodies_man.txt
