@@ -15,10 +15,11 @@
 #define NB_MAX_BODIES 65536
 
 
+// Type of simulation run
 typedef struct menu_run_t
 {
-    unsigned int seq: 1;
-    unsigned int openmp: 1;
+    bool seq: 1;
+    bool openmp: 1;
 } menu_run_t;
 
 
