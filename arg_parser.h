@@ -7,15 +7,12 @@
 
 typedef struct arguments_t 
 {
-    bool s : 1;                 // flag -s  
-    bool m : 1;                 // flag -m
-    bool q : 1;                 // flag -q
-    bool h : 1;                 // flag -h
-    nb_float time;              // end time of modeling
-    nb_float delta;             // delta of time
-    char input[PATH_MAX];       // input system
-    char output[PATH_MAX];      // output system
-    char filename[PATH_MAX];    // filename for argument -f
+    bool s, m, q, h;    // flags -s, -m, -q, h
+    nb_float time;      // end time of modeling
+    nb_float delta;     // delta of time
+    char* input;        // input system
+    char* output;       // output system
+    char* filename;     // filename for argument -f
 } arguments_t;
 
 

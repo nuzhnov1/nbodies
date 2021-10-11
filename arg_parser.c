@@ -17,7 +17,7 @@ static arguments_t _default_args_settings =
     false, false,
     false, false,
     10.0, 0.1,
-    "\0", "\0", "\0"
+    NULL, NULL, NULL
 };
 
 
@@ -32,8 +32,7 @@ bool arg_parser(size_t argc, char** argv, arguments_t *const args)
         
         // if arguments start with dash and input 
         // and output files while not specified
-        if (arg[0] == '-' && args->input[0] == '\0' && 
-            args->output[0] == '\0')
+        if (arg[0] == '-' && args->input == NULL && args->output == NULL)
         {
             bool success;
 
@@ -46,17 +45,11 @@ bool arg_parser(size_t argc, char** argv, arguments_t *const args)
                 return false;
         }
         // if arg is filename and both files are not specified
-        else if (args->input[0] == '\0')
-        {
-            strncpy(args->input, arg, PATH_MAX - 1);
-            args->input[PATH_MAX - 1] = '\0';
-        }
+        else if (args->input == NULL)
+            args->input = arg;
         // if arg is filename and input file is specified
-        else if (args->output[0] == '\0')
-        {
-            strncpy(args->output, arg, PATH_MAX - 1);
-            args->output[PATH_MAX - 1] = '\0';
-        }
+        else if (args->output == NULL)
+            args->output = arg;
         else
         {
             printf("Failed parse: unknown argument \"%s\".\n", arg);
@@ -88,7 +81,7 @@ bool _parse_single_dash_args(size_t argc, char** argv, arguments_t *const args,
         {
             // if "t", "d" or "f" parameters are including in the union 
             // of arguments
-            if (strlen(arg) > 2)
+            if (strlen(arg) > 1)
             {
                 printf("Failed parse: argument \"-%c\" must not be included "
                     "in the union of arguments_t.\n", flag);
@@ -145,10 +138,7 @@ bool _parse_single_dash_args(size_t argc, char** argv, arguments_t *const args,
                 }
             }
             else
-            {
-                strncpy(args->filename, add_arg, PATH_MAX - 1);
-                args->filename[PATH_MAX - 1] = '\0';
-            }
+                args->filename = add_arg;
 
             break;
         }
@@ -304,8 +294,7 @@ bool _parse_double_dash_args(size_t argc, char** argv, arguments_t *const args,
                 return false;
             }
 
-            strncpy(args->filename, add_arg, PATH_MAX - 1);
-            args->filename[PATH_MAX - 1] = '\0';
+            args->filename = add_arg;
             
             return true;
         }

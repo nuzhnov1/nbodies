@@ -20,7 +20,7 @@ static bool _print_system(const nb_system *const system,
 int main(int argc, char** argv) 
 {
     nb_system system;
-    static arguments_t args;
+    arguments_t args;
 
     if (!arg_parser((size_t)argc, argv, &args))
         return -1;
@@ -32,7 +32,7 @@ int main(int argc, char** argv)
             return -1;
     }
     // if the input file is specified, but the output file is not specified
-    else if (args.input[0] != '\0' && args.output[0] == '\0')
+    else if (args.input != NULL && args.output == NULL)
     {
         nb_system_init_default(&system);
         if (errno == ENOMEM)
@@ -51,7 +51,7 @@ int main(int argc, char** argv)
         nb_system_destroy(&system);
     }
     // if both files are specified
-    else if (args.input[0] != '\0' && args.output[0] != '\0')
+    else if (args.input != NULL && args.output != NULL)
     {
         bool quiet = args.q;
         menu_run_t run;
@@ -134,7 +134,7 @@ bool _print_system(const nb_system *const system, arguments_t *const args,
 {
     bool is_print;
 
-    if (args->filename[0] == '\0')
+    if (args->filename == NULL)
     {   
         if (is_input_system)
             is_print = printf("Input system:\n") > 0;
