@@ -7,7 +7,7 @@
 
 typedef struct arguments_t 
 {
-    bool s, m, q, h;    // flags -s, -m, -q, h
+    bool s, m, q, h;    // flags: -s, -m, -q, -h
     nb_float time;      // end time of modeling
     nb_float delta;     // delta of time
     char* input;        // input system
