@@ -306,6 +306,7 @@ bool _parse_double_dash_args(size_t argc, char** argv, arguments_t *const args,
             sep == NULL && (strcmp(arg, "help") == 0))
         {
             args->h = true;
+            return true;
         }
     }
     

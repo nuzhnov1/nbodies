@@ -1,5 +1,5 @@
-#define NB_FLOAT_PRECISION 4
-#define NB_INT_SIZE 16
+#define NB_FLOAT_PRECISION 2
+#define NB_INT_SIZE 4
 
 
 #include "controller.h"

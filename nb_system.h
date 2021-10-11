@@ -2,7 +2,7 @@
 #define NB_SYSTEM_H
 
 
-#define NB_SYSTEM_DEBUG
+// #define NB_SYSTEM_DEBUG
 
 
 #include <stdio.h>

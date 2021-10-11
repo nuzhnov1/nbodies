@@ -103,7 +103,6 @@ int controller(int argc, char** argv)
 bool _print_manual()
 {
     FILE* man_file = fopen(MANUAL_PATH, "rt");
-    char buffer[1024];
 
     if (man_file == NULL)
     {
@@ -113,10 +112,14 @@ bool _print_manual()
 
     while (!feof(man_file) && !ferror(man_file))
     {
-        fgets(buffer, 1024, man_file);
-        puts(buffer);
-    }
+        int chr = getc(man_file);
 
+        if (chr == EOF)
+            break;
+        else
+            putc(chr, stdout);
+    }
+    
     if (ferror(man_file))
         printf("Error: failed to read data from manual file.\n");
 

@@ -3,8 +3,9 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include <time.h>
+#include <limits.h>
+#include <errno.h>
 
 #include <omp.h>
 
@@ -147,6 +148,7 @@ void menu_loop(nb_system *const system)
             {
                 run.seq = true;
                 run.openmp = true;
+                
                 break;
             }
             default:
