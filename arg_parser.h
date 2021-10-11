@@ -12,14 +12,8 @@ typedef struct arguments_t
     nb_float time;              // end time of modeling
     nb_float delta;             // delta of time
     char filename[PATH_MAX];    // filename for argument -f
-    unsigned char s: 1;         // flag -s
-    unsigned char m: 1;         // flag -m
-    unsigned char q: 1;         // flag -q
-    unsigned char h: 1;         // flag -h
+    bool s, m, q, h;            // flags: -s, -m, -q and -h
 } arguments_t;
-
-
-extern arguments_t default_settings;
 
 
 bool arg_parser(size_t argc, char** argv, arguments_t *const args);

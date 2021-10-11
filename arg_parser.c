@@ -12,19 +12,19 @@ static bool _parse_double_dash_args(size_t argc, char** argv,
     arguments_t *const args, size_t* const num);
 
 
-arguments_t default_settings = 
+static arguments_t _default_args_settings = 
 {
     "\0", "\0",
     10.0, 0.1,
     "\0",
-    false, true,
+    false, false,
     false, false
 };
 
 
 bool arg_parser(size_t argc, char** argv, arguments_t *const args)
 {
-    *args = default_settings;
+    *args = _default_args_settings;
 
     // skip first argument - program name
     for (size_t i = 1; i < argc; i++)
@@ -36,8 +36,8 @@ bool arg_parser(size_t argc, char** argv, arguments_t *const args)
         {
             bool success;
 
-            if (strlen(arg) > 1 && arg[1] == '-')
-                success = _parse_single_dash_args(argc, argv, args, &i);
+            if (arg[1] == '-')
+                success = _parse_double_dash_args(argc, argv, args, &i);
             else
                 success = _parse_single_dash_args(argc, argv, args, &i);
             
@@ -60,6 +60,9 @@ bool arg_parser(size_t argc, char** argv, arguments_t *const args)
             return false;
         }
     }
+
+    if (!args->s && !args->m)
+        args->m = true;
 
     return true;
 }
