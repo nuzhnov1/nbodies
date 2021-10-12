@@ -5,7 +5,7 @@
 #include "menu.h"
 
 
-#define MANUAL_PATH "nbodies_man.txt"
+#define MANUAL_PATH "manual.txt"
 
 
 static bool _print_manual();
