@@ -84,7 +84,8 @@ bool _parse_single_dash_args(size_t argc, char** argv, arguments_t *const args,
             if (strlen(arg) > 1)
             {
                 printf("Failed parse: argument \"-%c\" must not be included "
-                    "in the union of arguments_t.\n", flag);
+                    "in the union of arguments.\n", flag);
+                
                 return false;
             }
 
@@ -171,7 +172,6 @@ bool _parse_single_dash_args(size_t argc, char** argv, arguments_t *const args,
     }
 
     *num = index;
-    
     return true;
 }
 
@@ -183,6 +183,13 @@ bool _parse_double_dash_args(size_t argc, char** argv, arguments_t *const args,
     char* sep = strchr(arg, '=');
     char* add_arg;
     char* temp;
+
+    // if argument is "help"
+    if (strcmp(arg, "help") == 0)
+    {
+        args->h = true;
+        return true;
+    }
 
     // if '=' is contained in the argument
     if (sep != NULL)
@@ -198,119 +205,81 @@ bool _parse_double_dash_args(size_t argc, char** argv, arguments_t *const args,
         *num = index;
     }
 
+    char flag;  // 't' - time, 'd' - delta, 'f' - file
+    char argname[10];
+
     // if argument is "time"
-    if (temp = strstr(arg, "time"))
+    if (sep != NULL && (strstr(arg, "time=") == arg) ||
+        sep == NULL && (strcmp(arg, "time") == 0))
     {
-        // checking the correctness of the "time" argument entry
-        if (sep != NULL && (sep - temp == strlen("time")) ||
-            sep == NULL && (strcmp(arg, "time") == 0))
-        {
-            if (add_arg == NULL)
-            {
-                printf("Failed parse: value is not set for parameter "
-                    "\"--time\".\n");
-                return false;
-            }
-
-            char* endptr = add_arg;
-            double value;
-            #if NB_FLOAT_PRECISION == 1
-            value = strtof(add_arg, &endptr);
-            #elif NB_FLOAT_PRECISION == 2
-            value = strtod(add_arg, &endptr);
-            #elif NB_FLOAT_PRECISION == 4
-            value = strtold(add_arg, &endptr);
-            #endif
-
-            if (errno == ERANGE)
-            {
-                printf("Failed parse: the value for parameter \"--time\" is "
-                    "out of the allowed range.\n");
-                return false;
-            }
-            else if (*endptr != '\0')
-            {
-                printf("Failed parse: failed to conversion \"%s\" "
-                    "to float value for parameter \"--time\".\n", add_arg);
-                return false;
-            }
-            else
-                args->time = value;
-            
-            return true;
-        }
+        flag = 't';
+        strncpy(argname, "--time", 10);
     }
-    else if (temp = strstr(arg, "delta"))
+    // if argument is "delta"
+    else if (sep != NULL && (strstr(arg, "delta=") == arg) ||
+        sep == NULL && (strcmp(arg, "delta") == 0))
     {
-        // checking the correctness of the "delta" argument entry
-        if (sep != NULL && (sep - temp == strlen("delta")) ||
-            sep == NULL && (strcmp(arg, "delta") == 0))
+        flag = 'd';
+        strncpy(argname, "--delta", 10);
+    }
+    // if argument is "file"
+    else if (sep != NULL && (strstr(arg, "file=") == arg) ||
+        sep == NULL && (strcmp(arg, "file") == 0))
+    {
+        flag = 'f';
+        strncpy(argname, "--file", 10);
+    }
+    else
+    {
+        printf("Failed parse: unknown parameter \"%s\".\n", arg);
+        return false;
+    }
+
+    if (add_arg == NULL)
+    {
+        printf("Failed parse: value is not set for parameter \"%s\".\n", 
+            argname);
+        
+        return false;
+    }
+
+    if (flag == 't' || flag == 'd')
+    {
+        char* endptr = add_arg;
+        double value;
+        
+#if NB_FLOAT_PRECISION == 1
+        value = strtof(add_arg, &endptr);
+#elif NB_FLOAT_PRECISION == 2
+        value = strtod(add_arg, &endptr);
+#elif NB_FLOAT_PRECISION == 4
+        value = strtold(add_arg, &endptr);
+#endif
+
+        if (errno == ERANGE)
         {
-            if (add_arg == NULL)
-            {
-                printf("Failed parse: value is not set for parameter "
-                    "\"--delta\".\n");
-                return false;
-            }
-
-            char* endptr = add_arg;
-            double value;
-            #if NB_FLOAT_PRECISION == 1
-            value = strtof(add_arg, &endptr);
-            #elif NB_FLOAT_PRECISION == 2
-            value = strtod(add_arg, &endptr);
-            #elif NB_FLOAT_PRECISION == 4
-            value = strtold(add_arg, &endptr);
-            #endif
-
-            if (errno == ERANGE)
-            {
-                printf("Failed parse: the value for parameter \"--delta\" is "
-                    "out of the allowed range.\n");
-                return false;
-            }
-            else if (*endptr != '\0')
-            {
-                printf("Failed parse: failed to conversion \"%s\" "
-                    "to float value for parameter \"--delta\".\n", add_arg);
-                return false;
-            }
+            printf("Failed parse: the value for parameter \"%s\" is "
+                "out of the allowed range.\n", argname);
+            
+            return false;
+        }
+        else if (*endptr != '\0')
+        {
+            printf("Failed parse: failed to conversion \"%s\" "
+                "to float value for parameter \"%s\".\n", add_arg, argname);
+            
+            return false;
+        }
+        else
+        {
+            if (flag == 't')
+                args->time = value;
             else
                 args->delta = value;
-            
-            return true;
         }
     }
-    else if (temp = strstr(arg, "file"))
-    {
-        // checking the correctness of the "file" argument entry
-        if (sep != NULL && (sep - temp == strlen("file")) ||
-            sep == NULL && (strcmp(arg, "file") == 0))
-        {
-            if (add_arg == NULL)
-            {
-                printf("Failed parse: value is not set for parameter "
-                    "\"--file\".\n");
-                return false;
-            }
-
-            args->filename = add_arg;
-            
-            return true;
-        }
-    }
-    else if (temp = strstr(arg, "help"))
-    {
-        // checking the correctness of the "help" argument entry
-        if (sep != NULL && (sep - temp == strlen("help")) ||
-            sep == NULL && (strcmp(arg, "help") == 0))
-        {
-            args->h = true;
-            return true;
-        }
-    }
+    else
+        args->filename = add_arg;
     
-    printf("Failed parse: unknown parameter \"%s\".\n", arg);
-    
-    return false;
+    return true;
 }
