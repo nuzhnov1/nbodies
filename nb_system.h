@@ -2,15 +2,13 @@
 #define NB_SYSTEM_H
 
 
-// #define NB_SYSTEM_DEBUG
-
-
 #include <stdio.h>
 
 #include "nb_body.h"
 
 
-typedef struct nb_system {
+typedef struct nb_system
+{
     nb_body* bodies;
     void* _calc_buf;  // buffer for new values of speed in calculation
     size_t count;

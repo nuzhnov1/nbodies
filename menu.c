@@ -238,17 +238,18 @@ void menu_rand(nb_system *const system, nb_uint count,
     name[NB_NAME_MAX - 1] = '\0';
 
     // Setting seed to random numbers generator
-    #ifdef MENU_DEBUG
+#ifdef MENU_DEBUG
     nb_rand_srand(0);
-    #else
+#else
     nb_rand_srand((nb_uint)time((time_t*)NULL));
-    #endif
+#endif
 
     nb_system_clear(system);
     if (errno == ENOMEM)
     {
         printf("Critical error: failed to allocate memory. "
             "System was destroyed!\n");
+        
         exit(EXIT_FAILURE);
     }
 
@@ -282,6 +283,7 @@ void menu_rand(nb_system *const system, nb_uint count,
 void menu_run_system(nb_system *const system, nb_float end_time,
     nb_float dt, menu_run_t run)
 {
+    int max_threads = omp_get_max_threads();
     double timework;
     size_t num_iter = end_time / dt;
 
@@ -304,6 +306,7 @@ void menu_run_system(nb_system *const system, nb_float end_time,
         double start, finish;
 
         printf("The system is being modeled in parallel mode...\n");
+        printf("Up to %d threads are used.\n", max_threads);
 
         start = omp_get_wtime();
         for (size_t i = 0; i < num_iter; i++)
@@ -336,6 +339,7 @@ void menu_run_system(nb_system *const system, nb_float end_time,
         printf("Simulation time: %.3f sec.\n", timework);
         
         printf("The system is being modeled in parallel mode...\n");
+        printf("Up to %d threads are used.\n", max_threads);
         par_start = omp_get_wtime();
         for (size_t i = 0; i < num_iter; i++)
             nb_system_run(&copy, dt, true);
@@ -356,7 +360,8 @@ bool menu_load_system(nb_system *const system, const char *const filename)
 
     file = fopen(filename, "rb");
 
-    if (file == NULL) {
+    if (file == NULL)
+    {
         printf("Error: failed to open this file.\n");
         return false;
     }
@@ -400,7 +405,7 @@ bool menu_save_system(const nb_system *const system,
     const char *const filename)
 {
     FILE* file;
-    bool status;
+    bool status = true;
 
     file = fopen(filename, "wb");
 
@@ -417,10 +422,7 @@ bool menu_save_system(const nb_system *const system,
         status = false;
     }
     else
-    {
         printf("The data was successfully written to this file.\n");
-        status = true;
-    }
     
     fclose(file);
 
@@ -680,6 +682,7 @@ void _menu_compare_systems(const nb_system *const system1,
     printf("Average absolute error of coordinates: ");
     nb_vector2_print(&ae_coords, stdout);
     printf("\n");
+    // if relative error value of coordinates is valid
     if (!(isnan(re_coords.x) || isnan(re_coords.y)))
     {
         printf("Average relative error of coordinates(%%): ");
@@ -689,6 +692,7 @@ void _menu_compare_systems(const nb_system *const system1,
     printf("Average absolute error of speed: ");
     nb_vector2_print(&ae_speed, stdout);
     printf("\n");
+    // if relative error value of speed is valid
     if (!(isnan(re_speed.x) || isnan(re_speed.y)))
     {
         printf("Average relative error of speed(%%): ");
@@ -698,6 +702,7 @@ void _menu_compare_systems(const nb_system *const system1,
     printf("Average absolute error of force: ");
     nb_vector2_print(&ae_force, stdout);
     printf("\n");
+    // if relative error value of force is valid
     if (!(isnan(re_force.x) || isnan(re_force.y)))
     {
         printf("Average relative error of force(%%): ");
@@ -714,7 +719,8 @@ nb_int _menu_input_int()
     
     buffer[NB_NAME_MAX - 1] = '\0';
 
-    while (true) {
+    while (true)
+    {
         _menu_input_str(buffer, NB_NAME_MAX);
         errno = 0;
         
@@ -775,13 +781,13 @@ nb_float _menu_input_float() {
         _menu_input_str(buffer, NB_NAME_MAX);
         errno = 0;
 
-        #if NB_FLOAT_PRECISION == 1
+#if NB_FLOAT_PRECISION == 1
         val = strtof(buffer, &endptr);
-        #elif NB_FLOAT_PRECISION == 2
+#elif NB_FLOAT_PRECISION == 2
         val = strtod(buffer, &endptr);
-        #elif NB_FLOAT_PRECISION == 4
+#elif NB_FLOAT_PRECISION == 4
         val = strtold(buffer, &endptr);
-        #endif
+#endif
 
         if (errno == ERANGE)
             printf("Error: the number is out of the allowed range.\n");

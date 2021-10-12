@@ -2,9 +2,6 @@
 #define MENU_H
 
 
-// #define MENU_DEBUG
-
-
 #include <stdio.h>
 
 #include "nb_system.h"
