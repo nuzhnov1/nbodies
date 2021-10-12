@@ -11,6 +11,7 @@
 static bool _print_manual();
 static bool _print_system(const nb_system *const system,
     arguments_t *const args, bool is_input_system);
+static void _print_nums_types_info();
 
 
 int controller(int argc, char** argv) 
@@ -68,6 +69,8 @@ int controller(int argc, char** argv)
             return -1;
         }
 
+        _print_nums_types_info();
+
         if (!quiet)
             _print_system(&system, &args, true);
         
@@ -93,6 +96,7 @@ int controller(int argc, char** argv)
             return -1;
         }
 
+        _print_nums_types_info();
         menu_loop(&system);
         nb_system_destroy(&system);
     }
@@ -103,6 +107,7 @@ int controller(int argc, char** argv)
 bool _print_manual()
 {
     FILE* man_file = fopen(MANUAL_PATH, "rt");
+    bool status = true;
 
     if (man_file == NULL)
     {
@@ -121,10 +126,12 @@ bool _print_manual()
     }
     
     if (ferror(man_file))
+    {
         printf("Error: failed to read data from manual file.\n");
+        status = false;
+    }
 
     fclose(man_file);
-
     return true;
 }
 
@@ -133,6 +140,7 @@ bool _print_system(const nb_system *const system, arguments_t *const args,
 {
     bool is_print;
 
+    // if filename is not specified
     if (args->filename == NULL)
     {   
         if (is_input_system)
@@ -158,6 +166,7 @@ bool _print_system(const nb_system *const system, arguments_t *const args,
         {
             printf("Error: failed to create file \"%s\".\n",
                 args->filename);
+            
             return false;
         }
 
@@ -184,4 +193,20 @@ bool _print_system(const nb_system *const system, arguments_t *const args,
     }
 
     return true;
+}
+
+void _print_nums_types_info()
+{
+    printf("To represent data in the system , the following are used:\n");
+
+#if NB_FLOAT_PRECISION == 1
+    printf("\tsingle-precision(float) floating-point numbers;\n");
+#elif NB_FLOAT_PRECISION == 2
+    printf("\tdouble-precision(double) floating-point numbers;\n");
+#else
+    printf("\textended double-precision(long double) "
+        "floating-point numbers;\n");
+#endif
+
+    printf("\tintegers in the %u-byte range;\n", NB_INT_SIZE);
 }

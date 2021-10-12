@@ -1,5 +1,5 @@
-#ifndef PROXY_MAIN_H
-#define PROXY_MAIN_H
+#ifndef CONTROLLER_H
+#define CONTROLLER_H
 
 
 int controller(int argc, char** argv);
