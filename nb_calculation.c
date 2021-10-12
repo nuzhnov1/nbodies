@@ -263,7 +263,6 @@ void nb_euler_multithreading(nb_system *const system, nb_float dt)
     nb_float* mass_j;
     nb_float* rad_j;
 
-    // TODO: specify the number in clause if
     #pragma omp parallel private(cx_i, cy_i, sx_i, sy_i, fx_i, fy_i, mass_i, \
                                  rad_i, cx_j, cy_j, sx_j, sy_j, fx_j, fy_j, \
                                  mass_j, rad_j) \
@@ -283,7 +282,6 @@ void nb_euler_multithreading(nb_system *const system, nb_float dt)
             *fx_i = 0;
             *fy_i = 0; 
 
-            // TODO: remove this aftet debugging
             #ifdef NB_CALCULATION_DEBUG
             if (i == 0)
             {
@@ -398,7 +396,6 @@ void nb_euler_multithreading(nb_system *const system, nb_float dt)
                 sy_new[i] = (*sy_i);
             }
 
-            // TODO: remove this aftet debugging
             #ifdef NB_CALCULATION_DEBUG
             if (i == 0)
             {
@@ -436,7 +433,6 @@ void nb_euler_multithreading(nb_system *const system, nb_float dt)
             *cx_i += dt * prev_sx_i + ((*sx_i) - prev_sx_i) * dt / 2;
             *cy_i += dt * prev_sy_i + ((*sy_i) - prev_sy_i) * dt / 2;
 
-            // TODO: remove this aftet debugging
             #ifdef NB_CALCULATION_DEBUG
             if (i == 0)
             {

@@ -1,25 +1,8 @@
-#define NB_FLOAT_PRECISION 4
-#define NB_INT_SIZE 16
+#include "controller.h"
 
 
-#include <errno.h>
-
-#include "menu.h"
-
-
-int main() 
+int main(int argc, char** argv) 
 {
-    nb_system system;
-
-    nb_system_init_default(&system);
-    if (errno == ENOMEM)
-    {
-        printf("Critical error: failed to initializing system.\n");
-        return -1;
-    }
-    
-    menu_loop(&system);
-    nb_system_destroy(&system);
-
-    return 0;
+    int status = controller(argc, argv);
+    return status;
 }

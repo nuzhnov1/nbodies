@@ -8,3 +8,6 @@
 *.txt
 nbodies
 
+
+# Include files
+!manual.txt

@@ -1,0 +1,45 @@
+NAME
+    nbodies - Solves the problem of n-bodies by sequential and parallel methods.
+
+SYNOPSIS
+    nbodies [options] [<Input file>] [<Output file>]
+
+DESCRIPTION
+    Solves the problem of n-bodies by sequential and parallel methods.
+    The Euler method is used as a solution method. OpenMP technology is used 
+    for parallel computing.
+
+    The program operates in three modes: if the input and output files are not
+    specified, a text user interface is launched, if only the input file is
+    specified, then the system is loaded from it and displayed on the screen
+    (or to a file if the -f parameter with the file name is specified).
+    If the input and output files are specified, then the system is loaded from
+    the input file, solved in accordance with the specified options and saved
+    to the specified file, if it is not, then it is created.
+
+    By default, the system is solved in parallel mode. The value of the
+    end time of the system simulation by default is 10, the modeling step 
+    by default is 0.1.
+
+OPTIONS
+    -t <Float number> or --time=<Float number> or --time <Float number>
+        Setting end time of modeling to specified value.
+    
+    -d <Float number> or --delta=<Float number> or --delta <Float number>
+        Setting step of modeling to specified value.
+    
+    -s
+        Using a single thread when modeling
+    
+    -m
+        Using multiple threads in modeling
+    
+    -q
+        Setting the "quiet" mode of the program. Do not output the systems
+        themselves to the console or to a file.
+    
+    -f <Filename> or --file=<Filename> or --file <Filename>
+        Setting the output of systems to the specified file.
+    
+    -h or --help
+        Printing this manual
