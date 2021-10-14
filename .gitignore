@@ -1,4 +1,4 @@
 # Exclude files and directories
-.vscode
-./bin
-./obj
+/.vscode
+/bin
+/obj
