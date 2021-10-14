@@ -1,16 +1,6 @@
-# Check OS
-OS = $(shell)
-
-# Select OS-defined commands
-ifeq ($(OS),Windows)
-MKDIR   = md
-RMDIR	= rd /S /Q
-else ifeq ($(OS),GNU/Linux)
+# Variable definitions
 MKDIR   = mkdir -p
 RMDIR	= rm -rf
-endif
-
-# Variable definitions
 PROG	= nbodies
 CC      = gcc
 BIN     = ./bin
@@ -34,13 +24,13 @@ default: $(EXE)
 run: $(EXE)
 	$<
 
-# Remove directory ./obj
+# Remove directory ./obj and ./bin
 clean:
 	$(RMDIR) $(OBJ) $(BIN)
 
-# Create directories ./bin and ./obj if they are not exist
+# Create directories ./bin and ./obj
 $(BIN) $(OBJ):
-    $(MKDIR) $@
+	$(MKDIR) $@
 
 # Compile all source files
 $(OBJ)/%.o: $(SRC)/%.c | $(OBJ)
