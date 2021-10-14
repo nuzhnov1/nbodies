@@ -1,13 +1,4 @@
-# Exclude dirs
+# Exclude files and directories
 .vscode
-
-
-# Exclude files
-*.o
-*.nb
-*.txt
-nbodies
-
-
-# Include files
-!manual.txt
+./bin
+./obj
