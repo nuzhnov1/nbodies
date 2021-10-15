@@ -10,6 +10,7 @@ typedef struct arguments_t
     bool s, m, q, h;    // flags: -s, -m, -q, -h
     nb_float time;      // end time of modeling
     nb_float delta;     // delta of time
+    char* progname;     // path to programe
     char* input;        // input system
     char* output;       // output system
     char* filename;     // filename for argument -f

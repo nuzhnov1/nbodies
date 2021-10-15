@@ -1,14 +1,14 @@
+#include "controller.h"
+
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 
 #include "arg_parser.h"
 #include "menu.h"
 
 
-#define MANUAL_PATH "../manual.txt"
-
-
-static bool _print_manual();
+static bool _print_manual(const char* progname);
 static bool _print_system(const nb_system *const system,
     arguments_t *const args, bool is_input_system);
 static void _print_nums_types_info();
@@ -25,7 +25,7 @@ int controller(int argc, char** argv)
     // if "help" flag is specified
     if (args.h)
     {
-        if (!_print_manual())
+        if (!_print_manual(args.progname))
             return -1;
     }
     // if the input file is specified, but the output file is not specified
@@ -104,9 +104,27 @@ int controller(int argc, char** argv)
     return 0;
 }
 
-bool _print_manual()
+bool _print_manual(const char* progname)
 {
-    FILE* man_file = fopen(MANUAL_PATH, "rt");
+#if defined(_WIN32)
+    char delimeter = '\\';
+#elif defined(__unix__)
+    char delimeter = '/';
+#endif
+
+    // characters number of MANUAL_FILENAME
+    size_t size = sizeof(MANUAL_FILENAME) / sizeof(char);
+    // characters number of path without manual filename
+    size_t num1 = (strrchr(progname, delimeter) - progname) + 1;
+    // characters number of path with manual filename
+    size_t num2 = (PATH_MAX > (num1 + size)) ? size : 0;
+    char manual_path[PATH_MAX];
+
+    // Extracting dir path from progname and building path of manual file
+    strncpy(manual_path, progname, num1);
+    strncpy(manual_path + num1, MANUAL_FILENAME, num2);
+
+    FILE* man_file = fopen(manual_path, "rt");
     bool status = true;
 
     if (man_file == NULL)

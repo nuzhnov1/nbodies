@@ -17,13 +17,16 @@ static arguments_t _default_args_settings =
     false, false,
     false, false,
     10.0, 0.1,
-    NULL, NULL, NULL
+    NULL, NULL, NULL, NULL
 };
 
 
 bool arg_parser(size_t argc, char** argv, arguments_t *const args)
 {
     *args = _default_args_settings;
+
+    // Extract program name
+    args->progname = argv[0];
 
     // skip first argument - program name
     for (size_t i = 1; i < argc; i++)
