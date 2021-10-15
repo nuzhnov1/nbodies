@@ -1,7 +1,15 @@
 # Nbodies
 How to build this project on Linux:  
 1. cd `<dir with your project>`  
-2. make
+2. make -s 
 
-See the manual on how to use this program. To do this, open manual.txt or  
-enter a command ./nbodies --help  
+You may also:  
+1. Rebuild this project, using command:  
+   $ make -s rebuild
+2. Remove \"bin\" and \"obj\" directories, using command:  
+   $ make -s clean
+
+See the manual on how to use this program.  
+To do this, open manual.txt or enter a commands:  
+1. $ cd `<Directory with this project>`  
+2. $ ./nbodies -h  
