@@ -2,6 +2,7 @@
 MKDIR   = mkdir -p
 RMDIR	= rm -rf
 COPY	= cp
+TAR		= tar -cf
 
 PROG	= nbodies
 MAN		= manual.txt
@@ -12,6 +13,7 @@ BIN     = ./bin
 OBJ     = ./obj
 INCLUDE = ./include
 SRC     = ./src
+EXAMP	= ./examples
 
 SRCS    = $(wildcard $(SRC)/*.c)
 OBJS    = $(patsubst $(SRC)/%.c,$(OBJ)/%.o,$(SRCS))
@@ -23,7 +25,7 @@ LDLIBS  = -fopenmp -lm
 
 
 # Phony targets
-.PHONY: build run rebuid clean
+.PHONY: build run rebuid clean tar
 
 
 # Build target
@@ -43,6 +45,11 @@ rebuild: clean build
 clean:
 	$(info Removing a directories "$(OBJ)" and "$(BIN)"...)
 	$(RMDIR) $(OBJ) $(BIN)
+
+# Create "tar" target
+tar:
+	$(info Archiving the project...)
+	$(TAR) $(PROG).tar $(EXAMP) $(INCLUDE) $(SRC) Makefile $(MAN)
 
 # Creating directories target
 $(BIN) $(OBJ):
