@@ -205,6 +205,7 @@ bool nb_system_read(nb_system *const system, FILE* stream)
         return false;
 
     system->count = 0;  // better rewrite old data then reallocate memory
+    system->time = time;
 
     for (size_t i = 0; i < count; i++)
     {
