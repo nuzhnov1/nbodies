@@ -7,6 +7,12 @@
 #include <limits.h>
 
 
+// if macro PATH_MAX is not defined in <limits.h>
+#if !defined(PATH_MAX)
+#define PATH_MAX
+#endif
+
+
 // setting default int numbers size if it's not defined earlier
 #ifndef NB_INT_SIZE
 #define NB_INT_SIZE 4
