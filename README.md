@@ -12,4 +12,4 @@ You may also:
 See the manual on how to use this program.  
 To do this, open manual.txt or enter a commands:  
 1. $ cd `<Directory with this project>`  
-2. $ ./nbodies -h  
+2. $ ./bin/nbodies -h  
