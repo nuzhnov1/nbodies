@@ -17,7 +17,7 @@ SRCS    = $(wildcard $(SRC)/*.c)
 OBJS    = $(patsubst $(SRC)/%.c,$(OBJ)/%.o,$(SRCS))
 EXE     = $(BIN)/$(PROG)
 
-CFLAGS  = -I$(INCLUDE) -O3
+CFLAGS  = -I$(INCLUDE) -O3 -std=c99
 LDFLAGS =
 LDLIBS  = -fopenmp -lm
 
