@@ -60,5 +60,5 @@ $(EXE): $(OBJS) | $(BIN)
 		echo "Linking a $$item file..." ; \
 	done
 	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
-	$(info Copy the manual file "$(MAN)"" to folder "$(BIN)"...)
+	$(info Copy the manual file "$(MAN)" to folder "$(BIN)"...)
 	$(COPY) $(MAN) $(BIN)/$(MAN)
