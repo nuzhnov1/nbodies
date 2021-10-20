@@ -31,7 +31,7 @@ LDLIBS  = -fopenmp -lm
 # Build target
 build: $(EXE)
 	$(info Building a program is complete. Executable file is located \
-		in $(BIN) directory.)
+		in "$(BIN)" directory.)
 
 # Run target
 run: $(EXE)
