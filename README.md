@@ -11,8 +11,13 @@ You may also:
 3. Run this project, using command:  
    $ make -s run
 4. Create tar archive with this project,
+<<<<<<< HEAD
 using command:  
 $ make -s tar 
+=======
+using command:
+   $ make -s tar 
+>>>>>>> 31e0e01beec48cfbea144ff96022beae617b021c
 
 See the manual on how to use this program.  
 To do this, open manual.txt or enter a commands:  
